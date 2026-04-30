@@ -1,345 +1,346 @@
+<!DOCTYPE html>
 <html lang="kk">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>7 Мамыр - Арнайы шақыру 🎖️</title>
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>7 Мамыр - Арнайы шақыру 🎖️</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
 
-    <style>
-        :root {
-            --primary: #4ade80;
-            --secondary: #16a34a;
-            --danger: #f43f5e;
-            --bg-dark: #f8f9fa; 
-            --glass: rgba(255, 255, 255, 0.95);
-        }
+    <style>
+        :root {
+            --primary: #4ade80;
+            --secondary: #16a34a;
+            --danger: #f43f5e;
+            --bg-dark: #f8f9fa; 
+            --glass: rgba(255, 255, 255, 0.95);
+        }
 
-        * {
-            -webkit-tap-highlight-color: transparent;
-            user-select: none;
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * {
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-        body {
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: var(--bg-dark);
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            overflow: hidden;
-            color: #333;
-        }
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: var(--bg-dark);
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            overflow: hidden;
+            color: #333;
+        }
 
-        #sakura-canvas {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: 1;
-            pointer-events: none;
-        }
+        #sakura-canvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
 
-        .container {
-            position: relative;
-            z-index: 10;
-            width: 90%;
-            max-width: 400px;
-        }
+        .container {
+            position: relative;
+            z-index: 10;
+            width: 90%;
+            max-width: 400px;
+        }
 
-        .card {
-            background: var(--glass);
-            border-radius: 24px;
-            padding: 30px 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
-            text-align: center;
-            transition: all 0.4s ease;
-        }
+        .card {
+            background: var(--glass);
+            border-radius: 24px;
+            padding: 30px 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            text-align: center;
+            transition: all 0.4s ease;
+        }
 
-        .hidden { display: none; opacity: 0; transform: scale(0.9); }
+        .hidden { display: none; opacity: 0; transform: scale(0.9); }
 
-        h1 {
-            font-size: 1.5rem;
-            margin-bottom: 20px;
-            color: #111;
-        }
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #111;
+        }
 
-        .btn-group {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
 
-        button {
-            border: none;
-            padding: 16px;
-            border-radius: 16px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
-        }
+        button {
+            border: none;
+            padding: 16px;
+            border-radius: 16px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
 
-        #yesBtn {
-            background: linear-gradient(135deg, #ff4d6d, #c9184a);
-            color: white;
-            position: relative;
-        }
+        #yesBtn {
+            background: linear-gradient(135deg, #ff4d6d, #c9184a);
+            color: white;
+            position: relative;
+        }
 
-        #noBtn {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
-        }
+        #noBtn {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
 
-        /* Адаптивный контейнер для 3D */
-        .qr-container {
-            margin: 15px auto;
-            width: 100%;
-            max-width: 280px;
-            aspect-ratio: 1 / 1;
-            cursor: pointer;
-            border-radius: 16px;
-            background: #ffffff;
-            position: relative;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
-        }
+        /* Адаптивный контейнер для 3D */
+        .qr-container {
+            margin: 15px auto;
+            width: 100%;
+            max-width: 280px;
+            aspect-ratio: 1 / 1;
+            cursor: pointer;
+            border-radius: 16px;
+            background: #ffffff;
+            position: relative;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+        }
 
-        .details {
-            text-align: left;
-            background: #f1f5f9;
-            padding: 15px;
-            border-radius: 12px;
-            margin-top: 15px;
-            font-size: 0.9rem;
-            border-left: 4px solid var(--secondary);
-        }
+        .details {
+            text-align: left;
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 15px;
+            font-size: 0.9rem;
+            border-left: 4px solid var(--secondary);
+        }
 
-        #sad-text {
-            color: var(--danger);
-            font-size: 1.8rem;
-            font-weight: 900;
-            animation: shake 0.5s infinite;
-        }
+        #sad-text {
+            color: var(--danger);
+            font-size: 1.8rem;
+            font-weight: 900;
+            animation: shake 0.5s infinite;
+        }
 
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-4px); }
-            75% { transform: translateX(4px); }
-        }
-    </style>
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            75% { transform: translateX(4px); }
+        }
+    </style>
 </head>
 <body>
 
-    <canvas id="sakura-canvas"></canvas>
+    <canvas id="sakura-canvas"></canvas>
 
-    <div class="container">
-        <!-- ЭКРАН 1 -->
-        <div id="step1" class="card">
-            <h1>7-ші мамырға сыйлық керек пе? 🎁<br><small style="font-size: 0.8rem; opacity: 0.7;">Тез жауап беріңіз!</small></h1>
-            <div class="btn-group">
-                <button id="yesBtn">Иә, иә! 😍</button>
-                <button id="noBtn">Жоқ, жоқ 🤐</button>
-            </div>
-        </div>
+    <div class="container">
+        <!-- ЭКРАН 1 -->
+        <div id="step1" class="card">
+            <h1>7-ші мамырға сыйлық керек пе? 🎁<br><small style="font-size: 0.8rem; opacity: 0.7;">Тез жауап беріңіз!</small></h1>
+            <div class="btn-group">
+                <button id="yesBtn">Иә, иә! 😍</button>
+                <button id="noBtn">Жоқ, жоқ 🤐</button>
+            </div>
+        </div>
 
-        <!-- ЭКРАН 2 -->
-        <div id="step2" class="card hidden">
-            <h1 id="sad-text">ӨКІНІШТІ... 💔<br>КЕШ ҚАЛДЫҢЫЗ!</h1>
-        </div>
+        <!-- ЭКРАН 2 -->
+        <div id="step2" class="card hidden">
+            <h1 id="sad-text">ӨКІНІШТІ... 💔<br>КЕШ ҚАЛДЫҢЫЗ!</h1>
+        </div>
 
-        <!-- ЭКРАН 3 -->
-        <div id="step3" class="card hidden">
-            <h1 style="color: var(--secondary);">7 МАМЫРМЕН! 🎖️</h1>
-            <p style="font-size: 0.9rem; margin-bottom: 10px; color: #555;">
-                Бұл қалжың еді! Міне, сіздің шақыруыңыз:
-            </p>
+        <!-- ЭКРАН 3 -->
+        <div id="step3" class="card hidden">
+            <h1 style="color: var(--secondary);">7 МАМЫРМЕН! 🎖️</h1>
+            <p style="font-size: 0.9rem; margin-bottom: 10px; color: #555;">
+                Бұл қалжың еді! Міне, сіздің шақыруыңыз:
+            </p>
 
-            <div id="qr3d" class="qr-container" onclick="toggleView()"></div>
-            
-            <p style="font-size: 0.75rem; color: #888; margin-top: 5px;">👆 Сканерлеу үшін басыңыз (тегіс болады)</p>
+            <div id="qr3d" class="qr-container" onclick="toggleView()"></div>
+            
+            <p style="font-size: 0.75rem; color: #888; margin-top: 5px;">👆 Сканерлеу үшін басыңыз (тегіс болады)</p>
 
-            <div class="details">
-                <p>📍 <b>Орын:</b> Мерекелік кеш</p>
-                <p>📅 <b>Күні:</b> 7 Мамыр, 2026</p>
-                <p>✨ <b>Сыйлық:</b> VIP Жолдама</p>
-            </div>
-        </div>
-    </div>
+            <div class="details">
+                <p>📍 <b>Орын:</b> Мерекелік кеш</p>
+                <p>📅 <b>Күні:</b> 7 Мамыр, 2026</p>
+                <p>✨ <b>Сыйлық:</b> VIP Жолдама</p>
+            </div>
+        </div>
+    </div>
 
-    <script>
-        const yesBtn = document.getElementById('yesBtn');
-        const noBtn = document.getElementById('noBtn');
-        const step1 = document.getElementById('step1');
-        const step2 = document.getElementById('step2');
-        const step3 = document.getElementById('step3');
+    <script>
+        const yesBtn = document.getElementById('yesBtn');
+        const noBtn = document.getElementById('noBtn');
+        const step1 = document.getElementById('step1');
+        const step2 = document.getElementById('step2');
+        const step3 = document.getElementById('step3');
 
-        const moveBtn = () => {
-            const x = Math.random() * (window.innerWidth - yesBtn.offsetWidth - 40) + 20;
-            const y = Math.random() * (window.innerHeight - yesBtn.offsetHeight - 40) + 20;
-            yesBtn.style.position = 'fixed';
-            yesBtn.style.left = x + 'px';
-            yesBtn.style.top = y + 'px';
-        };
+        const moveBtn = () => {
+            const x = Math.random() * (window.innerWidth - yesBtn.offsetWidth - 40) + 20;
+            const y = Math.random() * (window.innerHeight - yesBtn.offsetHeight - 40) + 20;
+            yesBtn.style.position = 'fixed';
+            yesBtn.style.left = x + 'px';
+            yesBtn.style.top = y + 'px';
+        };
 
-        yesBtn.addEventListener('mouseover', moveBtn);
-        yesBtn.addEventListener('touchstart', (e) => { e.preventDefault(); moveBtn(); });
+        yesBtn.addEventListener('mouseover', moveBtn);
+        yesBtn.addEventListener('touchstart', (e) => { e.preventDefault(); moveBtn(); });
 
-        noBtn.addEventListener('click', () => {
-            step1.classList.add('hidden');
-            setTimeout(() => {
-                step1.style.display = 'none';
-                step2.style.display = 'block';
-                setTimeout(() => step2.classList.remove('hidden'), 50);
+        noBtn.addEventListener('click', () => {
+            step1.classList.add('hidden');
+            setTimeout(() => {
+                step1.style.display = 'none';
+                step2.style.display = 'block';
+                setTimeout(() => step2.classList.remove('hidden'), 50);
 
-                setTimeout(() => {
-                    step2.classList.add('hidden');
-                    setTimeout(() => {
-                        step2.style.display = 'none';
-                        step3.style.display = 'block';
-                        setTimeout(() => step3.classList.remove('hidden'), 50);
-                        if (!qrInitialized) init3DQR();
-                    }, 600);
-                }, 2000);
-            }, 600);
-        });
+                setTimeout(() => {
+                    step2.classList.add('hidden');
+                    setTimeout(() => {
+                        step2.style.display = 'none';
+                        step3.style.display = 'block';
+                        setTimeout(() => step3.classList.remove('hidden'), 50);
+                        if (!qrInitialized) init3DQR();
+                    }, 600);
+                }, 2000);
+            }, 600);
+        });
 
-        // САКУРА ФОН
-        const canvas = document.getElementById('sakura-canvas');
-        const ctx = canvas.getContext('2d');
-        let w = canvas.width = window.innerWidth;
-        let h = canvas.height = window.innerHeight;
-        const petals = Array.from({ length: 25 }, () => ({
-            x: Math.random() * w, y: Math.random() * h,
-            r: Math.random() * 3 + 2, dx: Math.random() * 2 - 1, dy: Math.random() * 1 + 0.5,
-            tilt: Math.random() * 10, tA: Math.random() * 5
-        }));
-        function draw() {
-            ctx.clearRect(0, 0, w, h);
-            petals.forEach(p => {
-                ctx.beginPath(); ctx.fillStyle = "rgba(255, 183, 197, 0.6)";
-                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
-                p.y += p.dy; p.x += p.dx; p.tA += 0.05;
-                if (p.y > h) p.y = -10;
-            });
-            requestAnimationFrame(draw);
-        }
-        draw();
+        // САКУРА ФОН
+        const canvas = document.getElementById('sakura-canvas');
+        const ctx = canvas.getContext('2d');
+        let w = canvas.width = window.innerWidth;
+        let h = canvas.height = window.innerHeight;
+        const petals = Array.from({ length: 25 }, () => ({
+            x: Math.random() * w, y: Math.random() * h,
+            r: Math.random() * 3 + 2, dx: Math.random() * 2 - 1, dy: Math.random() * 1 + 0.5,
+            tilt: Math.random() * 10, tA: Math.random() * 5
+        }));
+        function draw() {
+            ctx.clearRect(0, 0, w, h);
+            petals.forEach(p => {
+                ctx.beginPath(); ctx.fillStyle = "rgba(255, 183, 197, 0.6)";
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
+                p.y += p.dy; p.x += p.dx; p.tA += 0.05;
+                if (p.y > h) p.y = -10;
+            });
+            requestAnimationFrame(draw);
+        }
+        draw();
 
-        // 3D ИЗОМЕТРИЧЕСКИЙ QR
-        let qrInitialized = false, is3DView = true, camera, scene, renderer, qrGroup;
+        // 3D ИЗОМЕТРИЧЕСКИЙ QR
+        let qrInitialized = false, is3DView = true, camera, scene, renderer, qrGroup;
 
-        function init3DQR() {
-            qrInitialized = true;
-            const container = document.getElementById('qr3d');
-            const size = container.clientWidth;
+        function init3DQR() {
+            qrInitialized = true;
+            const container = document.getElementById('qr3d');
+            const size = container.clientWidth;
 
-            const qr = qrcode(0, 'M');
-            qr.addData('https://invitons.onrender.com/');
-            qr.make();
-            const count = qr.getModuleCount();
+            const qr = qrcode(0, 'M');
+            qr.addData('https://invitons.onrender.com/');
+            qr.make();
+            const count = qr.getModuleCount();
 
-            scene = new THREE.Scene();
-            
-            // Ортографическая камера для изометрии (убирает искажения)
-            const aspect = 1;
-            const d = count * 0.6; 
-            camera = new THREE.OrthographicCamera(-d * aspect, d * aspect, d, -d, 1, 1000);
-            camera.position.set(20, 20, 20);
-            camera.lookAt(0, 0, 0);
+            scene = new THREE.Scene();
+            
+            // Ортографическая камера для изометрии (убирает искажения)
+            const aspect = 1;
+            const d = count * 0.6; 
+            camera = new THREE.OrthographicCamera(-d * aspect, d * aspect, d, -d, 1, 1000);
+            camera.position.set(20, 20, 20);
+            camera.lookAt(0, 0, 0);
 
-            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            renderer.setSize(size, size);
-            renderer.setPixelRatio(window.devicePixelRatio);
-            container.appendChild(renderer.domElement);
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(size, size);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            container.appendChild(renderer.domElement);
 
-            const light = new THREE.DirectionalLight(0xffffff, 1);
-            light.position.set(10, 20, 10);
-            scene.add(light);
-            scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+            const light = new THREE.DirectionalLight(0xffffff, 1);
+            light.position.set(10, 20, 10);
+            scene.add(light);
+            scene.add(new THREE.AmbientLight(0xffffff, 0.8));
 
-            qrGroup = new THREE.Group();
-            scene.add(qrGroup);
+            qrGroup = new THREE.Group();
+            scene.add(qrGroup);
 
-            const geo = new THREE.BoxGeometry(1, 1, 1);
-            geo.translate(0, 0.5, 0);
+            const geo = new THREE.BoxGeometry(1, 1, 1);
+            geo.translate(0, 0.5, 0);
 
-            const mWhite = new THREE.MeshLambertMaterial({ color: '#ffffff' });
-            const mGreen = new THREE.MeshLambertMaterial({ color: '#7cb342' }); // Углы
-            const mPink = new THREE.MeshLambertMaterial({ color: '#f48fb1' });  // Крона
-            const mBrown = new THREE.MeshLambertMaterial({ color: '#795548' }); // Ствол
+            const mWhite = new THREE.MeshLambertMaterial({ color: '#ffffff' });
+            const mGreen = new THREE.MeshLambertMaterial({ color: '#7cb342' }); // Углы
+            const mPink = new THREE.MeshLambertMaterial({ color: '#f48fb1' });  // Крона
+            const mBrown = new THREE.MeshLambertMaterial({ color: '#795548' }); // Ствол
 
-            const half = count / 2;
+            const half = count / 2;
 
-            for (let x = 0; x < count; x++) {
-                for (let z = 0; z < count; z++) {
-                    const dark = qr.isDark(x, z);
-                    const posX = x - half + 0.5;
-                    const posZ = z - half + 0.5;
-                    const dist = Math.sqrt(posX*posX + posZ*posZ);
-                    
-                    // Поиск угловых квадратов (7x7 модулей)
-                    const isCorner = (x < 7 && z < 7) || (x > count - 8 && z < 7) || (x < 7 && z > count - 8);
+            for (let x = 0; x < count; x++) {
+                for (let z = 0; z < count; z++) {
+                    const dark = qr.isDark(x, z);
+                    const posX = x - half + 0.5;
+                    const posZ = z - half + 0.5;
+                    const dist = Math.sqrt(posX*posX + posZ*posZ);
+                    
+                    // Поиск угловых квадратов (7x7 модулей)
+                    const isCorner = (x < 7 && z < 7) || (x > count - 8 && z < 7) || (x < 7 && z > count - 8);
 
-                    if (!dark) {
-                        const b = new THREE.Mesh(geo, mWhite);
-                        b.position.set(posX, 0, posZ);
-                        b.scale.set(0.95, 0.1, 0.95);
-                        qrGroup.add(b);
-                    } else {
-                        if (isCorner) {
-                            const b = new THREE.Mesh(geo, mGreen);
-                            b.position.set(posX, 0, posZ);
-                            b.scale.set(0.95, 0.4, 0.95);
-                            qrGroup.add(b);
-                        } else if (dist < 2.5) {
-                            const b = new THREE.Mesh(geo, mBrown);
-                            b.position.set(posX, 0, posZ);
-                            b.scale.set(0.95, 7, 0.95); // Ствол
-                            qrGroup.add(b);
-                        } else if (dist < 8) {
-                            // Крона дерева
-                            const hBase = 0.2;
-                            const base = new THREE.Mesh(geo, mPink);
-                            base.position.set(posX, 0, posZ);
-                            base.scale.set(0.95, hBase, 0.95);
-                            qrGroup.add(base);
+                    if (!dark) {
+                        const b = new THREE.Mesh(geo, mWhite);
+                        b.position.set(posX, 0, posZ);
+                        b.scale.set(0.95, 0.1, 0.95);
+                        qrGroup.add(b);
+                    } else {
+                        if (isCorner) {
+                            const b = new THREE.Mesh(geo, mGreen);
+                            b.position.set(posX, 0, posZ);
+                            b.scale.set(0.95, 0.4, 0.95);
+                            qrGroup.add(b);
+                        } else if (dist < 2.5) {
+                            const b = new THREE.Mesh(geo, mBrown);
+                            b.position.set(posX, 0, posZ);
+                            b.scale.set(0.95, 7, 0.95); // Ствол
+                            qrGroup.add(b);
+                        } else if (dist < 8) {
+                            // Крона дерева
+                            const hBase = 0.2;
+                            const base = new THREE.Mesh(geo, mPink);
+                            base.position.set(posX, 0, posZ);
+                            base.scale.set(0.95, hBase, 0.95);
+                            qrGroup.add(base);
 
-                            const leafH = Math.max(2, 10 - dist*0.8);
-                            const leaf = new THREE.Mesh(geo, mPink);
-                            leaf.position.set(posX, 5, posZ);
-                            leaf.scale.set(0.95, leafH, 0.95);
-                            qrGroup.add(leaf);
-                        } else {
-                            const b = new THREE.Mesh(geo, mGreen);
-                            b.position.set(posX, 0, posZ);
-                            b.scale.set(0.95, 0.2, 0.95);
-                            qrGroup.add(b);
-                        }
-                    }
-                }
-            }
-            animate();
-        }
+                            const leafH = Math.max(2, 10 - dist*0.8);
+                            const leaf = new THREE.Mesh(geo, mPink);
+                            leaf.position.set(posX, 5, posZ);
+                            leaf.scale.set(0.95, leafH, 0.95);
+                            qrGroup.add(leaf);
+                        } else {
+                            const b = new THREE.Mesh(geo, mGreen);
+                            b.position.set(posX, 0, posZ);
+                            b.scale.set(0.95, 0.2, 0.95);
+                            qrGroup.add(b);
+                        }
+                    }
+                }
+            }
+            animate();
+        }
 
-        function toggleView() {
-            is3DView = !is3DView;
-            const targetY = is3DView ? 1 : 0.01;
-            const targetCam = is3DView ? {x:20, y:20, z:20} : {x:0, y:30, z:0};
+        function toggleView() {
+            is3DView = !is3DView;
+            const targetY = is3DView ? 1 : 0.01;
+            const targetCam = is3DView ? {x:20, y:20, z:20} : {x:0, y:30, z:0};
 
-            new TWEEN.Tween(qrGroup.scale).to({y: targetY}, 800).easing(TWEEN.Easing.Quadratic.InOut).start();
-            new TWEEN.Tween(camera.position).to(targetCam, 800).onUpdate(() => camera.lookAt(0,0,0)).start();
-        }
+            new TWEEN.Tween(qrGroup.scale).to({y: targetY}, 800).easing(TWEEN.Easing.Quadratic.InOut).start();
+            new TWEEN.Tween(camera.position).to(targetCam, 800).onUpdate(() => camera.lookAt(0,0,0)).start();
+        }
 
-        function animate(time) {
-            requestAnimationFrame(animate);
-            TWEEN.update(time);
-            if (is3DView) qrGroup.rotation.y += 0.005;
-            renderer.render(scene, camera);
-        }
-    </script>
+        function animate(time) {
+            requestAnimationFrame(animate);
+            TWEEN.update(time);
+            if (is3DView) qrGroup.rotation.y += 0.005;
+            renderer.render(scene, camera);
+        }
+    </script>
 </body>
-</html>
+</html> 
