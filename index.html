@@ -14,8 +14,8 @@
             --primary: #4ade80;
             --secondary: #16a34a;
             --danger: #f43f5e;
-            --bg-dark: #f8f9fa; 
-            --glass: rgba(255, 255, 255, 0.95);
+            --bg-dark: #fff5f7; /* Нежно-розовый фон */
+            --glass: rgba(255, 255, 255, 0.9);
         }
 
         * {
@@ -43,6 +43,7 @@
             width: 100%; height: 100%;
             z-index: 1;
             pointer-events: none;
+            background: linear-gradient(to bottom, #fff5f7 0%, #ffe4e8 100%);
         }
 
         .container {
@@ -54,9 +55,11 @@
 
         .card {
             background: var(--glass);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.5);
             border-radius: 24px;
             padding: 30px 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            box-shadow: 0 15px 35px rgba(255, 182, 193, 0.4);
             text-align: center;
             transition: all 0.4s ease;
         }
@@ -66,7 +69,7 @@
         h1 {
             font-size: 1.5rem;
             margin-bottom: 20px;
-            color: #111;
+            color: #d63384;
         }
 
         .btn-group {
@@ -86,17 +89,17 @@
         }
 
         #yesBtn {
-            background: linear-gradient(135deg, #ff4d6d, #c9184a);
+            background: linear-gradient(135deg, #ff758c, #ff7eb3);
             color: white;
             position: relative;
+            box-shadow: 0 4px 15px rgba(255, 117, 140, 0.4);
         }
 
         #noBtn {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            background: linear-gradient(135deg, #4ade80, #16a34a);
             color: white;
         }
 
-        /* Адаптивный контейнер для 3D */
         .qr-container {
             margin: 15px auto;
             width: 100%;
@@ -106,17 +109,17 @@
             border-radius: 16px;
             background: #ffffff;
             position: relative;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
         }
 
         .details {
             text-align: left;
-            background: #f1f5f9;
+            background: rgba(255, 255, 255, 0.6);
             padding: 15px;
             border-radius: 12px;
             margin-top: 15px;
             font-size: 0.9rem;
-            border-left: 4px solid var(--secondary);
+            border-left: 4px solid #ff758c;
         }
 
         #sad-text {
@@ -140,7 +143,7 @@
     <div class="container">
         <!-- ЭКРАН 1 -->
         <div id="step1" class="card">
-            <h1>7-ші мамырға сыйлық керек пе? 🎁<br><small style="font-size: 0.8rem; opacity: 0.7;">Тез жауап беріңіз!</small></h1>
+            <h1>7-ші мамырға сыйлық керек пе? 🎁<br><small style="font-size: 0.8rem; opacity: 0.7; color: #555;">Тез жауап беріңіз!</small></h1>
             <div class="btn-group">
                 <button id="yesBtn">Иә, иә! 😍</button>
                 <button id="noBtn">Жоқ, жоқ 🤐</button>
@@ -154,7 +157,7 @@
 
         <!-- ЭКРАН 3 -->
         <div id="step3" class="card hidden">
-            <h1 style="color: var(--secondary);">7 МАМЫРМЕН! 🎖️</h1>
+            <h1 style="color: #d63384;">7 МАМЫРМЕН! 🎖️</h1>
             <p style="font-size: 0.9rem; margin-bottom: 10px; color: #555;">
                 Бұл қалжың еді! Міне, сіздің шақыруыңыз:
             </p>
@@ -172,6 +175,7 @@
     </div>
 
     <script>
+        // ЛОГИКА КНОПОК
         const yesBtn = document.getElementById('yesBtn');
         const noBtn = document.getElementById('noBtn');
         const step1 = document.getElementById('step1');
@@ -208,29 +212,74 @@
             }, 600);
         });
 
-        // САКУРА ФОН
+        // --- УЛУЧШЕННАЯ САКУРА ---
         const canvas = document.getElementById('sakura-canvas');
         const ctx = canvas.getContext('2d');
-        let w = canvas.width = window.innerWidth;
-        let h = canvas.height = window.innerHeight;
-        const petals = Array.from({ length: 25 }, () => ({
-            x: Math.random() * w, y: Math.random() * h,
-            r: Math.random() * 3 + 2, dx: Math.random() * 2 - 1, dy: Math.random() * 1 + 0.5,
-            tilt: Math.random() * 10, tA: Math.random() * 5
-        }));
-        function draw() {
-            ctx.clearRect(0, 0, w, h);
-            petals.forEach(p => {
-                ctx.beginPath(); ctx.fillStyle = "rgba(255, 183, 197, 0.6)";
-                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
-                p.y += p.dy; p.x += p.dx; p.tA += 0.05;
-                if (p.y > h) p.y = -10;
-            });
-            requestAnimationFrame(draw);
-        }
-        draw();
+        let w, h;
+        let petals = [];
 
-        // 3D ИЗОМЕТРИЧЕСКИЙ QR
+        function initCanvas() {
+            w = canvas.width = window.innerWidth;
+            h = canvas.height = window.innerHeight;
+            petals = [];
+            // Создаем 60 пышных лепестков
+            for (let i = 0; i < 60; i++) {
+                petals.push(new SakuraPetal());
+            }
+        }
+
+        class SakuraPetal {
+            constructor() {
+                this.reset();
+            }
+            reset() {
+                this.x = Math.random() * w;
+                this.y = Math.random() * h - h;
+                this.r = Math.random() * 4 + 4; // Размер
+                this.dx = Math.random() * 2 + 1; // Скорость по X
+                this.dy = Math.random() * 1 + 1.5; // Скорость падения
+                this.m = Math.random() * 2; // Множитель качания
+                
+                // Цвета: от нежно-розового до насыщенного
+                const colors = ['#ffb7c5', '#ffc0cb', '#fae1e5', '#ff91a4'];
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                
+                this.angle = Math.random() * Math.PI * 2;
+                this.spin = Math.random() * 0.05;
+            }
+            draw() {
+                if (this.y > h) this.reset();
+                this.x += this.dx + Math.sin(this.angle) * 0.5;
+                this.y += this.dy;
+                this.angle += this.spin;
+
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+                ctx.beginPath();
+                // Рисуем форму лепестка (эллипс с выемкой)
+                ctx.moveTo(0, 0);
+                ctx.bezierCurveTo(-this.r, -this.r, -this.r, this.r, 0, this.r * 1.5);
+                ctx.bezierCurveTo(this.r, this.r, this.r, -this.r, 0, 0);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.restore();
+                
+                if (this.x > w) this.x = -10;
+            }
+        }
+
+        function renderSakura() {
+            ctx.clearRect(0, 0, w, h);
+            petals.forEach(p => p.draw());
+            requestAnimationFrame(renderSakura);
+        }
+
+        window.addEventListener('resize', initCanvas);
+        initCanvas();
+        renderSakura();
+
+        // 3D ИЗОМЕТРИЧЕСКИЙ QR (без изменений)
         let qrInitialized = false, is3DView = true, camera, scene, renderer, qrGroup;
 
         function init3DQR() {
@@ -244,8 +293,6 @@
             const count = qr.getModuleCount();
 
             scene = new THREE.Scene();
-            
-            // Ортографическая камера для изометрии (убирает искажения)
             const aspect = 1;
             const d = count * 0.6; 
             camera = new THREE.OrthographicCamera(-d * aspect, d * aspect, d, -d, 1, 1000);
@@ -269,9 +316,9 @@
             geo.translate(0, 0.5, 0);
 
             const mWhite = new THREE.MeshLambertMaterial({ color: '#ffffff' });
-            const mGreen = new THREE.MeshLambertMaterial({ color: '#7cb342' }); // Углы
-            const mPink = new THREE.MeshLambertMaterial({ color: '#f48fb1' });  // Крона
-            const mBrown = new THREE.MeshLambertMaterial({ color: '#795548' }); // Ствол
+            const mGreen = new THREE.MeshLambertMaterial({ color: '#4ade80' }); 
+            const mPink = new THREE.MeshLambertMaterial({ color: '#ffb7c5' });  
+            const mBrown = new THREE.MeshLambertMaterial({ color: '#8d6e63' }); 
 
             const half = count / 2;
 
@@ -281,8 +328,6 @@
                     const posX = x - half + 0.5;
                     const posZ = z - half + 0.5;
                     const dist = Math.sqrt(posX*posX + posZ*posZ);
-                    
-                    // Поиск угловых квадратов (7x7 модулей)
                     const isCorner = (x < 7 && z < 7) || (x > count - 8 && z < 7) || (x < 7 && z > count - 8);
 
                     if (!dark) {
@@ -294,26 +339,18 @@
                         if (isCorner) {
                             const b = new THREE.Mesh(geo, mGreen);
                             b.position.set(posX, 0, posZ);
-                            b.scale.set(0.95, 0.4, 0.95);
+                            b.scale.set(0.95, 0.5, 0.95);
                             qrGroup.add(b);
                         } else if (dist < 2.5) {
                             const b = new THREE.Mesh(geo, mBrown);
                             b.position.set(posX, 0, posZ);
-                            b.scale.set(0.95, 7, 0.95); // Ствол
+                            b.scale.set(0.95, 7, 0.95);
                             qrGroup.add(b);
                         } else if (dist < 8) {
-                            // Крона дерева
-                            const hBase = 0.2;
-                            const base = new THREE.Mesh(geo, mPink);
-                            base.position.set(posX, 0, posZ);
-                            base.scale.set(0.95, hBase, 0.95);
-                            qrGroup.add(base);
-
-                            const leafH = Math.max(2, 10 - dist*0.8);
-                            const leaf = new THREE.Mesh(geo, mPink);
-                            leaf.position.set(posX, 5, posZ);
-                            leaf.scale.set(0.95, leafH, 0.95);
-                            qrGroup.add(leaf);
+                            const b = new THREE.Mesh(geo, mPink);
+                            b.position.set(posX, 5, posZ);
+                            b.scale.set(0.95, Math.max(2, 10 - dist*0.8), 0.95);
+                            qrGroup.add(b);
                         } else {
                             const b = new THREE.Mesh(geo, mGreen);
                             b.position.set(posX, 0, posZ);
@@ -330,7 +367,6 @@
             is3DView = !is3DView;
             const targetY = is3DView ? 1 : 0.01;
             const targetCam = is3DView ? {x:20, y:20, z:20} : {x:0, y:30, z:0};
-
             new TWEEN.Tween(qrGroup.scale).to({y: targetY}, 800).easing(TWEEN.Easing.Quadratic.InOut).start();
             new TWEEN.Tween(camera.position).to(targetCam, 800).onUpdate(() => camera.lookAt(0,0,0)).start();
         }
