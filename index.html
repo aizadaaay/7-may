@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>7 Мамыр - Тосын сый 🎁</title>
+    <title>7 Мамыр - Арнайы шақыру 🎖️</title>
     <style>
         :root {
             --primary: #4ade80;
             --secondary: #16a34a;
             --danger: #f43f5e;
-            --bg-dark: #0f172a;
-            --glass: rgba(30, 41, 59, 0.7);
-            --shadow: 0 10px 40px rgba(74, 222, 128, 0.15);
+            --bg-dark: #070a13;
+            --glass: rgba(15, 23, 42, 0.8);
+            --sakura: #ffb7c5;
         }
 
         * {
@@ -28,335 +28,256 @@
             justify-content: center;
             align-items: center;
             background: var(--bg-dark);
-            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
             overflow: hidden;
             color: #f8fafc;
         }
 
-        /* Cherry Blossom Canvas */
-        #canvas {
+        #sakura-canvas {
             position: absolute;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            z-index: 0;
+            z-index: 1;
             pointer-events: none;
         }
 
-        .screen {
-            position: absolute;
-            width: 90%;
-            max-width: 420px;
-            padding: 40px 25px;
-            background: var(--glass);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-radius: 35px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: var(--shadow);
-            text-align: center;
+        .container {
+            position: relative;
             z-index: 10;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            opacity: 0;
-            transform: scale(0.9) translateY(30px);
-            transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+            width: 90%;
+            max-width: 400px;
+            perspective: 1000px;
         }
 
-        .screen.active {
-            display: flex;
-            opacity: 1;
-            transform: scale(1) translateY(0);
+        .card {
+            background: var(--glass);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-radius: 30px;
+            padding: 35px 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            text-align: center;
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
         }
+
+        .hidden { display: none; opacity: 0; transform: scale(0.8); }
 
         h1 {
-            color: var(--primary);
-            font-size: 1.6rem;
-            font-weight: 700;
+            font-size: 1.5rem;
             margin-bottom: 25px;
-            line-height: 1.4;
-            text-shadow: 0 0 15px rgba(74, 222, 128, 0.3);
+            line-height: 1.3;
+            color: #fff;
         }
 
-        .buttons {
+        .btn-group {
             display: flex;
             flex-direction: column;
-            gap: 15px;
-            width: 100%;
+            gap: 12px;
         }
 
         button {
             border: none;
-            padding: 16px;
-            border-radius: 20px;
+            padding: 18px;
+            border-radius: 18px;
             font-size: 1.1rem;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            width: 100%;
+            transition: 0.3s;
         }
 
-        /* ИӘ батырмасы қашады */
+        /* "ИӘ" батырмасы қашады */
         #yesBtn {
-            background: linear-gradient(135deg, var(--danger), #be123c);
+            background: linear-gradient(135deg, #ff4d6d, #c9184a);
             color: white;
-            box-shadow: 0 6px 20px rgba(244, 63, 94, 0.4);
             position: relative;
         }
 
         #noBtn {
             background: linear-gradient(135deg, var(--primary), var(--secondary));
             color: white;
-            box-shadow: 0 6px 20px rgba(74, 222, 128, 0.3);
         }
 
-        #noBtn:active { transform: scale(0.95); }
-
-        /* 3D WebGPU стиліндегі QR Код */
-        .qr-wrapper {
-            margin: 20px 0;
-            perspective: 1200px;
+        /* 3D QR Section */
+        .qr-container {
+            margin: 25px auto;
+            width: 200px;
+            height: 200px;
             cursor: pointer;
         }
 
-        .qr-card {
-            width: 220px;
-            height: 220px;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 15px;
-            border-radius: 25px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            transform-style: preserve-3d;
-            /* Изометриялық көрініс (WebGPU демосындағыдай) */
-            transform: rotateX(60deg) rotateZ(-45deg) translateY(-20px);
-            transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
-            box-shadow: 
-                -30px 30px 40px rgba(0,0,0,0.5),
-                inset 0 0 20px rgba(74, 222, 128, 0.2);
-        }
-
-        .qr-card.flat {
-            /* Тегіс сканерлеуге арналған көрініс */
-            transform: rotateX(0deg) rotateZ(0deg) translateY(0);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
-            background: #fff;
-        }
-
-        .qr-card img {
+        .qr-frame {
             width: 100%;
             height: 100%;
-            border-radius: 15px;
-            image-rendering: pixelated;
+            position: relative;
+            transform-style: preserve-3d;
+            transform: rotateX(45deg) rotateZ(-45deg);
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        .hint-text {
-            font-size: 0.85rem;
-            color: #94a3b8;
-            margin-top: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
+        .qr-frame.flat {
+            transform: rotateX(0deg) rotateZ(0deg);
         }
 
-        .invite-details {
+        /* QR-ды WebGPU стилінде "блоктардан" жасалғандай көрсету үшін эффект */
+        .qr-image {
+            width: 100%;
+            height: 100%;
+            background: #fff;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 
+                -10px 10px 0px rgba(74, 222, 128, 0.3),
+                -20px 20px 0px rgba(74, 222, 128, 0.1);
+        }
+
+        .details {
             text-align: left;
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 15px;
             margin: 20px 0;
-            padding: 20px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 20px;
-            border-left: 4px solid var(--primary);
-            width: 100%;
+            font-size: 0.9rem;
+            border-left: 3px solid var(--primary);
         }
 
-        .invite-details p { margin: 8px 0; color: #cbd5e1; font-size: 0.95rem; }
-        .invite-details b { color: var(--primary); }
-
-        .countdown {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-            width: 100%;
-            margin-top: 15px;
-        }
-
-        .time-box {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 10px 5px;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .time-num { display: block; font-size: 1.3rem; font-weight: 800; color: var(--primary); }
-        .time-lbl { font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
-
-        #sadMessage {
+        #sad-text {
             color: var(--danger);
             font-size: 1.8rem;
-            text-shadow: 0 0 20px rgba(244, 63, 94, 0.4);
+            font-weight: 900;
+            animation: shake 0.5s infinite;
+        }
+
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            20% { transform: translate(-3px, 0px) rotate(-1deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
         }
     </style>
 </head>
 <body>
 
-    <!-- Сакура жапырақтары түсетін Canvas -->
-    <canvas id="canvas"></canvas>
+    <canvas id="sakura-canvas"></canvas>
 
-    <!-- 1 Экран: Сұрақ -->
-    <div class="screen active" id="screen1">
-        <h1>7-ші мамырға сыйлық керек пе?<br><br>Тез айтыңызшы! 🎁</h1>
-        <div class="buttons">
-            <button id="yesBtn">Иә, әрине! 😍</button>
-            <button id="noBtn">Жоқ, керек емес 😒</button>
-        </div>
-    </div>
-
-    <!-- 2 Экран: Өкінішті -->
-    <div class="screen" id="screen2">
-        <h1 id="sadMessage">Өкінішті...<br><br>Өзіңізден көріңіз 💔</h1>
-    </div>
-
-    <!-- 3 Экран: Құттықтау + 3D QR -->
-    <div class="screen" id="screen3">
-        <h1>7 Мамыр - Отан қорғаушылар күнімен! 🎉</h1>
-        <p style="color: #cbd5e1; font-size: 0.95rem;">
-            Жаңағы жай ғана қалжың еді! Сіздерді керемет кешкі асқа шақырамыз!
-        </p>
-
-        <div class="qr-wrapper" onclick="toggleQR()">
-            <div class="qr-card" id="qrCard">
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=Happy+7+May+Invitation" alt="QR Code">
+    <div class="container">
+        <!-- 1 ЭКРАН -->
+        <div id="step1" class="card">
+            <h1>7-ші мамырға сыйлық керек пе? 🎁<br><small style="font-size: 0.8rem; opacity: 0.7;">Иә немесе жоқ, тез айтыңызшы!</small></h1>
+            <div class="btn-group">
+                <button id="yesBtn">Иә, иә! 😍</button>
+                <button id="noBtn">Жоқ, жоқ 🤐</button>
             </div>
         </div>
-        <p class="hint-text">👆 QR кодты тегіс көру үшін үстін басыңыз</p>
 
-        <div class="invite-details">
-            <p>📍 <b>Орын:</b> Алматы қ., Ең жақсы мейрамхана</p>
-            <p>🕒 <b>Уақыты:</b> 7 Мамыр, 19:00</p>
+        <!-- 2 ЭКРАН -->
+        <div id="step2" class="card hidden">
+            <h1 id="sad-text">ӨКІНІШТІ... 💔<br>ӨЗІҢІЗДЕН КӨРІҢІЗ!</h1>
         </div>
 
-        <div class="countdown">
-            <div class="time-box"><span class="time-num" id="days">0</span><span class="time-lbl">Күн</span></div>
-            <div class="time-box"><span class="time-num" id="hours">0</span><span class="time-lbl">Сағат</span></div>
-            <div class="time-box"><span class="time-num" id="mins">0</span><span class="time-lbl">Мин</span></div>
-            <div class="time-box"><span class="time-num" id="secs">0</span><span class="time-lbl">Сек</span></div>
+        <!-- 3 ЭКРАН -->
+        <div id="step3" class="card hidden">
+            <h1 style="color: var(--primary);">7 МАМЫРМЕН! 🎖️</h1>
+            <p style="font-size: 0.9rem; margin-bottom: 15px; opacity: 0.8;">
+                Бұл тек кішігірім қалжың еді! Сізді мерекелік кешке шақырамыз.
+            </p>
+
+            <div class="qr-container" onclick="this.querySelector('.qr-frame').classList.toggle('flat')">
+                <div class="qr-frame">
+                    <img class="qr-image" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://reactiive.io/demos/cherry-blossom-qrcode" alt="QR">
+                </div>
+            </div>
+            <p style="font-size: 0.7rem; color: var(--primary); margin-bottom: 15px;">👆 3D QR-ды басып көріңіз</p>
+
+            <div class="details">
+                <p>📍 <b>Орын:</b> Мерекелік дастархан</p>
+                <p>📅 <b>Күні:</b> 7 Мамыр, 2026</p>
+                <p>✨ <b>Сыйлық:</b> Осы шақыру!</p>
+            </div>
+            
+            <p style="font-size: 0.8rem; font-style: italic;">Cherry Blossom Animation & 3D QR Style</p>
         </div>
     </div>
 
     <script>
-        // --- БАТЫРМА ҚАШУ ЛОГИКАСЫ ---
         const yesBtn = document.getElementById('yesBtn');
         const noBtn = document.getElementById('noBtn');
-        const screen1 = document.getElementById('screen1');
-        const screen2 = document.getElementById('screen2');
-        const screen3 = document.getElementById('screen3');
+        const step1 = document.getElementById('step1');
+        const step2 = document.getElementById('step2');
+        const step3 = document.getElementById('step3');
 
-        function moveYesBtn() {
-            const padding = 20;
-            const maxX = window.innerWidth - yesBtn.offsetWidth - padding;
-            const maxY = window.innerHeight - yesBtn.offsetHeight - padding;
+        // --- ИӘ БАТЫРМАСЫ ҚАШАДЫ ---
+        const moveBtn = () => {
+            const x = Math.random() * (window.innerWidth - yesBtn.offsetWidth - 40) + 20;
+            const y = Math.random() * (window.innerHeight - yesBtn.offsetHeight - 40) + 20;
             yesBtn.style.position = 'fixed';
-            yesBtn.style.left = Math.max(padding, Math.random() * maxX) + 'px';
-            yesBtn.style.top = Math.max(padding, Math.random() * maxY) + 'px';
+            yesBtn.style.left = x + 'px';
+            yesBtn.style.top = y + 'px';
             yesBtn.style.zIndex = '1000';
-        }
+        };
 
-        // "Иә" батырмасы қашады
-        yesBtn.addEventListener('mouseover', moveYesBtn);
-        yesBtn.addEventListener('touchstart', (e) => { e.preventDefault(); moveYesBtn(); }, {passive: false});
+        yesBtn.addEventListener('mouseover', moveBtn);
+        yesBtn.addEventListener('touchstart', (e) => { e.preventDefault(); moveBtn(); });
 
-        // "Жоқ" батырмасы басылады
+        // --- ЖОҚ БАТЫРМАСЫ БАСЫЛАДЫ ---
         noBtn.addEventListener('click', () => {
-            screen1.classList.remove('active');
-            
+            step1.classList.add('hidden');
             setTimeout(() => {
-                screen2.classList.add('active');
-                
-                // "Өкінішті" тексті 3 секунд тұрады, сосын негізгі экран ашылады
+                step1.style.display = 'none';
+                step2.style.display = 'block';
+                setTimeout(() => step2.classList.remove('hidden'), 50);
+
+                // Бірнеше минут емес, демонстрация үшін 3 секундтан кейін нағыз бетке өтеді
                 setTimeout(() => {
-                    screen2.classList.remove('active');
+                    step2.classList.add('hidden');
                     setTimeout(() => {
-                        screen3.classList.add('active');
-                        startTimer();
-                    }, 500);
+                        step2.style.display = 'none';
+                        step3.style.display = 'block';
+                        setTimeout(() => step3.classList.remove('hidden'), 50);
+                    }, 600);
                 }, 3000);
-            }, 500);
+            }, 600);
         });
 
-        // --- 3D QR АНИМАЦИЯСЫ ---
-        function toggleQR() {
-            const card = document.getElementById('qrCard');
-            card.classList.toggle('flat');
-        }
-
-        // --- ТАЙМЕР ---
-        function startTimer() {
-            const target = new Date("May 7, 2026 19:00:00").getTime();
-            setInterval(() => {
-                const now = new Date().getTime();
-                const diff = target - now;
-                if (diff < 0) return;
-                document.getElementById('days').innerText = Math.floor(diff / (1000 * 60 * 60 * 24));
-                document.getElementById('hours').innerText = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                document.getElementById('mins').innerText = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                document.getElementById('secs').innerText = Math.floor((diff % (1000 * 60)) / 1000);
-            }, 1000);
-        }
-
-        // --- CHERRY BLOSSOM (САКУРА) CANVAS АНИМАЦИЯСЫ ---
-        const canvas = document.getElementById('canvas');
+        // --- SAKURA ANIMATION (WebGPU Style) ---
+        const canvas = document.getElementById('sakura-canvas');
         const ctx = canvas.getContext('2d');
-        let width = canvas.width = window.innerWidth;
-        let height = canvas.height = window.innerHeight;
+        let w = canvas.width = window.innerWidth;
+        let h = canvas.height = window.innerHeight;
 
-        const petals = [];
-        for(let i = 0; i < 40; i++) {
-            petals.push({
-                x: Math.random() * width,
-                y: Math.random() * height,
-                size: Math.random() * 5 + 3,
-                speedY: Math.random() * 1.5 + 0.5,
-                speedX: Math.random() * 2 - 1,
-                angle: Math.random() * 360,
-                spin: Math.random() * 0.2 - 0.1,
-                color: Math.random() > 0.5 ? '#ffb7c5' : '#ff9eae'
-            });
-        }
+        const petals = Array.from({ length: 50 }, () => ({
+            x: Math.random() * w,
+            y: Math.random() * h,
+            r: Math.random() * 4 + 2,
+            dx: Math.random() * 2 - 1,
+            dy: Math.random() * 1.5 + 0.5,
+            tilt: Math.random() * 10,
+            tiltAngle: 0
+        }));
 
-        function drawPetals() {
-            ctx.clearRect(0, 0, width, height);
+        function draw() {
+            ctx.clearRect(0, 0, w, h);
             petals.forEach(p => {
-                ctx.save();
-                ctx.translate(p.x, p.y);
-                ctx.rotate(p.angle);
-                ctx.fillStyle = p.color;
-                ctx.globalAlpha = 0.7;
-                
-                // Жапырақ формасын салу
                 ctx.beginPath();
-                ctx.moveTo(0, 0);
-                ctx.bezierCurveTo(-p.size, -p.size, -p.size, p.size, 0, p.size);
-                ctx.bezierCurveTo(p.size, p.size, p.size, -p.size, 0, 0);
-                ctx.fill();
-                ctx.restore();
+                ctx.lineWidth = p.r;
+                ctx.strokeStyle = "#ffb7c5";
+                ctx.moveTo(p.x + p.tilt + p.r / 2, p.y);
+                ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r / 2);
+                ctx.stroke();
 
-                p.y += p.speedY;
-                p.x += p.speedX;
-                p.angle += p.spin;
+                p.y += p.dy;
+                p.x += p.dx;
+                p.tiltAngle += 0.05;
+                p.tilt = Math.sin(p.tiltAngle) * 10;
 
-                if(p.y > height + p.size) {
-                    p.y = -p.size;
-                    p.x = Math.random() * width;
-                }
+                if (p.y > h) { p.y = -10; p.x = Math.random() * w; }
             });
-            requestAnimationFrame(drawPetals);
+            requestAnimationFrame(draw);
         }
-        drawPetals();
+        draw();
 
-        window.addEventListener('resize', () => {
-            width = canvas.width = window.innerWidth;
-            height = canvas.height = window.innerHeight;
-        });
+        window.onresize = () => { w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; };
     </script>
 </body>
 </html>
