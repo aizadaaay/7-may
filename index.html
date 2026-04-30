@@ -299,7 +299,7 @@
                         } else if (dist < 2.5) {
                             const b = new THREE.Mesh(geo, mBrown);
                             b.position.set(posX, 0, posZ);
-                            b.scale.set(0.95, 7, 0.95); // Ствол
+                            b.scale.set(0.95, 3, 0.95); // Ствол
                             qrGroup.add(b);
                         } else if (dist < 8) {
                             // Крона дерева
@@ -309,9 +309,9 @@
                             base.scale.set(0.95, hBase, 0.95);
                             qrGroup.add(base);
 
-                            const leafH = Math.max(2, 10 - dist*0.8);
+                            const leafH = Math.max(1, 5 - dist*0.5);
                             const leaf = new THREE.Mesh(geo, mPink);
-                            leaf.position.set(posX, 5, posZ);
+                            leaf.position.set(posX, 2, posZ);
                             leaf.scale.set(0.95, leafH, 0.95);
                             qrGroup.add(leaf);
                         } else {
@@ -343,4 +343,4 @@
         }
     </script>
 </body>
-</html> 
+</html>
