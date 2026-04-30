@@ -4,41 +4,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>7 Мамыр - Арнайы шақыру 🎖️</title>
-    
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
 
     <style>
-        :root {
-            --primary: #4ade80;
-            --secondary: #16a34a;
-            --danger: #f43f5e;
-            --bg-dark: #f8f9fa; 
-            --glass: rgba(255, 255, 255, 0.95);
-        }
+        :root { --danger: #f43f5e; }
 
         * {
             -webkit-tap-highlight-color: transparent;
             user-select: none;
             box-sizing: border-box;
-            margin: 0;
-            padding: 0;
+            margin: 0; padding: 0;
         }
+
+        html, body { width: 100%; height: 100%; }
 
         body {
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            background: var(--bg-dark);
+            background: linear-gradient(135deg, #fce4ec 0%, #f8bbd9 35%, #e8f5e9 70%, #fff9c4 100%);
             font-family: -apple-system, BlinkMacSystemFont, sans-serif;
             overflow: hidden;
             color: #333;
         }
 
         #sakura-canvas {
-            position: absolute;
+            position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
             z-index: 1;
@@ -48,299 +43,376 @@
         .container {
             position: relative;
             z-index: 10;
-            width: 90%;
+            width: 92%;
             max-width: 400px;
         }
 
         .card {
-            background: var(--glass);
-            border-radius: 24px;
-            padding: 30px 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            background: rgba(255,255,255,0.97);
+            border-radius: 28px;
+            padding: 28px 18px;
+            box-shadow: 0 20px 60px rgba(255,100,130,0.18), 0 4px 20px rgba(0,0,0,0.06);
             text-align: center;
-            transition: all 0.4s ease;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            border: 1px solid rgba(255,183,197,0.4);
         }
 
-        .hidden { display: none; opacity: 0; transform: scale(0.9); }
+        .hidden    { display: none !important; }
+        .fade-out  { opacity: 0; transform: scale(0.93); }
 
-        h1 {
-            font-size: 1.5rem;
-            margin-bottom: 20px;
-            color: #111;
-        }
+        h1 { font-size: 1.4rem; margin-bottom: 20px; color: #111; line-height: 1.4; }
 
-        .btn-group {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
+        .btn-group { display: flex; flex-direction: column; gap: 12px; }
 
         button {
-            border: none;
-            padding: 16px;
-            border-radius: 16px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
+            border: none; padding: 16px; border-radius: 18px;
+            font-size: 1.1rem; font-weight: 700; cursor: pointer;
+            transition: transform .15s;
         }
+        button:active { transform: scale(0.97); }
 
         #yesBtn {
             background: linear-gradient(135deg, #ff4d6d, #c9184a);
-            color: white;
-            position: relative;
+            color: white; box-shadow: 0 6px 20px rgba(201,24,74,.35);
         }
-
         #noBtn {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
+            background: linear-gradient(135deg, #4ade80, #16a34a);
+            color: white; box-shadow: 0 6px 20px rgba(22,163,74,.3);
         }
 
-        /* Адаптивный контейнер для 3D */
-        .qr-container {
-            margin: 15px auto;
+        #sad-text {
+            color: var(--danger); font-size: 1.9rem; font-weight: 900;
+            line-height: 1.3; animation: shake .45s infinite;
+        }
+        @keyframes shake {
+            0%,100% { transform: translateX(0); }
+            25%      { transform: translateX(-5px) rotate(-1deg); }
+            75%      { transform: translateX(5px)  rotate(1deg); }
+        }
+
+        /* QR-блок — квадратный, во всю ширину карточки */
+        .qr-wrap {
             width: 100%;
-            max-width: 280px;
             aspect-ratio: 1 / 1;
             cursor: pointer;
             border-radius: 16px;
-            background: #ffffff;
+            background: #f8f8f8;
+            overflow: hidden;
+            margin: 8px auto 4px;
+            box-shadow: 0 6px 24px rgba(200,100,130,.15);
             position: relative;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+        }
+        .qr-wrap canvas { display: block; }
+
+        .qr-hint { font-size: .74rem; color: #aaa; margin-bottom: 6px; }
+
+        .direct-link {
+            display: inline-block; margin: 4px 0 10px;
+            color: #c9184a; text-decoration: underline;
+            font-size: .88rem; font-weight: 600;
         }
 
         .details {
             text-align: left;
-            background: #f1f5f9;
-            padding: 15px;
-            border-radius: 12px;
-            margin-top: 15px;
-            font-size: 0.9rem;
-            border-left: 4px solid var(--secondary);
-        }
-
-        #sad-text {
-            color: var(--danger);
-            font-size: 1.8rem;
-            font-weight: 900;
-            animation: shake 0.5s infinite;
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-4px); }
-            75% { transform: translateX(4px); }
+            background: linear-gradient(135deg, #f0fdf4, #fce7f3);
+            padding: 12px 14px; border-radius: 14px;
+            font-size: .88rem; border-left: 4px solid #16a34a; line-height: 1.85;
         }
     </style>
 </head>
 <body>
 
-    <canvas id="sakura-canvas"></canvas>
+<canvas id="sakura-canvas"></canvas>
 
-    <div class="container">
-        <!-- ЭКРАН 1 -->
-        <div id="step1" class="card">
-            <h1>7-ші мамырға сыйлық керек пе? 🎁<br><small style="font-size: 0.8rem; opacity: 0.7;">Тез жауап беріңіз!</small></h1>
-            <div class="btn-group">
-                <button id="yesBtn">Иә, иә! 😍</button>
-                <button id="noBtn">Жоқ, жоқ 🤐</button>
-            </div>
-        </div>
+<div class="container">
 
-        <!-- ЭКРАН 2 -->
-        <div id="step2" class="card hidden">
-            <h1 id="sad-text">ӨКІНІШТІ... 💔<br>КЕШ ҚАЛДЫҢЫЗ!</h1>
-        </div>
-
-        <!-- ЭКРАН 3 -->
-        <div id="step3" class="card hidden">
-            <h1 style="color: var(--secondary);">7 МАМЫРМЕН! 🎖️</h1>
-            <p style="font-size: 0.9rem; margin-bottom: 10px; color: #555;">
-                Бұл қалжың еді! Міне, сіздің шақыруыңыз:
-            </p>
-
-            <div id="qr3d" class="qr-container" onclick="toggleView()"></div>
-            
-            <p style="font-size: 0.75rem; color: #888; margin-top: 5px;">👆 Сканерлеу үшін басыңыз (тегіс болады)</p>
-                     <a href="https://invitons.onrender.com/" class="direct-link">Сайт арқылы көру (сілтеме)</a>
-            <div class="details">
-                <p>📍 <b>Орын:</b> Мерекелік кеш</p>
-                <p>📅 <b>Күні:</b> 7 Мамыр, 2026</p>
-                <p>✨ <b>Сыйлық:</b> VIP Жолдама</p>
-            </div>
+    <!-- ЭКРАН 1 -->
+    <div id="step1" class="card">
+        <h1>7-ші мамырға сыйлық керек пе? 🎁<br>
+            <small style="font-size:.78rem;opacity:.6;font-weight:400;">Тез жауап беріңіз!</small>
+        </h1>
+        <div class="btn-group">
+            <button id="yesBtn">Иә, иә! 😍</button>
+            <button id="noBtn">Жоқ, жоқ 🤐</button>
         </div>
     </div>
 
-    <script>
-        const yesBtn = document.getElementById('yesBtn');
-        const noBtn = document.getElementById('noBtn');
-        const step1 = document.getElementById('step1');
-        const step2 = document.getElementById('step2');
-        const step3 = document.getElementById('step3');
+    <!-- ЭКРАН 2 -->
+    <div id="step2" class="card hidden">
+        <h1 id="sad-text">ӨКІНІШТІ... 💔<br>КЕШ ҚАЛДЫҢЫЗ!</h1>
+    </div>
 
-        const moveBtn = () => {
-            const x = Math.random() * (window.innerWidth - yesBtn.offsetWidth - 40) + 20;
-            const y = Math.random() * (window.innerHeight - yesBtn.offsetHeight - 40) + 20;
-            yesBtn.style.position = 'fixed';
-            yesBtn.style.left = x + 'px';
-            yesBtn.style.top = y + 'px';
-        };
+    <!-- ЭКРАН 3 -->
+    <div id="step3" class="card hidden">
+        <h1 style="color:#16a34a;">7 МАМЫРМЕН! 🎖️</h1>
+        <p style="font-size:.88rem;color:#555;margin-bottom:6px;">Бұл қалжың еді! Міне, сіздің шақыруыңыз:</p>
 
-        yesBtn.addEventListener('mouseover', moveBtn);
-        yesBtn.addEventListener('touchstart', (e) => { e.preventDefault(); moveBtn(); });
+        <div id="qr3d" class="qr-wrap" onclick="toggleView()"></div>
+        <p class="qr-hint">👆 Сканерлеу үшін басыңыз (тегіс болады)</p>
+        <a href="https://invitons.onrender.com/" class="direct-link" target="_blank" rel="noopener">Сайт арқылы көру →</a>
 
-        noBtn.addEventListener('click', () => {
-            step1.classList.add('hidden');
-            setTimeout(() => {
-                step1.style.display = 'none';
-                step2.style.display = 'block';
-                setTimeout(() => step2.classList.remove('hidden'), 50);
+        <div class="details">
+            <p>📍 <b>Орын:</b> Мерекелік кеш</p>
+            <p>📅 <b>Күні:</b> 7 Мамыр, 2026</p>
+            <p>✨ <b>Сыйлық:</b> VIP Жолдама</p>
+        </div>
+    </div>
 
-                setTimeout(() => {
-                    step2.classList.add('hidden');
-                    setTimeout(() => {
-                        step2.style.display = 'none';
-                        step3.style.display = 'block';
-                        setTimeout(() => step3.classList.remove('hidden'), 50);
-                        if (!qrInitialized) init3DQR();
-                    }, 600);
-                }, 5500);
-            }, 600);
-        });
+</div>
 
-        // САКУРА ФОН
-        const canvas = document.getElementById('sakura-canvas');
-        const ctx = canvas.getContext('2d');
-        let w = canvas.width = window.innerWidth;
-        let h = canvas.height = window.innerHeight;
-        const petals = Array.from({ length: 25 }, () => ({
-            x: Math.random() * w, y: Math.random() * h,
-            r: Math.random() * 3 + 2, dx: Math.random() * 2 - 1, dy: Math.random() * 1 + 0.5,
-            tilt: Math.random() * 10, tA: Math.random() * 5
-        }));
-        function draw() {
-            ctx.clearRect(0, 0, w, h);
-            petals.forEach(p => {
-                ctx.beginPath(); ctx.fillStyle = "rgba(255, 183, 197, 0.6)";
-                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
-                p.y += p.dy; p.x += p.dx; p.tA += 0.05;
-                if (p.y > h) p.y = -10;
-            });
-            requestAnimationFrame(draw);
-        }
-        draw();
+<script>
+/* ============ КНОПКИ ============ */
+const yesBtn = document.getElementById('yesBtn');
+const noBtn  = document.getElementById('noBtn');
+const step1  = document.getElementById('step1');
+const step2  = document.getElementById('step2');
+const step3  = document.getElementById('step3');
 
-        // 3D ИЗОМЕТРИЧЕСКИЙ QR
-        let qrInitialized = false, is3DView = true, camera, scene, renderer, qrGroup;
+function showCard(hide, show, cb) {
+    hide.classList.add('fade-out');
+    setTimeout(() => {
+        hide.classList.add('hidden');
+        hide.classList.remove('fade-out');
+        show.classList.remove('hidden');
+        if (cb) cb();
+    }, 420);
+}
 
-        function init3DQR() {
-    qrInitialized = true;
-    const container = document.getElementById('qr3d');
-    const size = container.clientWidth;
+function moveBtn() {
+    const bw = yesBtn.offsetWidth  || 180;
+    const bh = yesBtn.offsetHeight || 52;
+    const x  = Math.random() * (window.innerWidth  - bw - 40) + 20;
+    const y  = Math.random() * (window.innerHeight - bh - 40) + 20;
+    yesBtn.style.cssText = `
+        position:fixed;z-index:999;left:${x}px;top:${y}px;
+        transition:left .2s,top .2s;border:none;padding:16px;
+        border-radius:18px;font-size:1.1rem;font-weight:700;cursor:pointer;
+        background:linear-gradient(135deg,#ff4d6d,#c9184a);color:white;`;
+}
 
+yesBtn.addEventListener('mouseover', moveBtn);
+yesBtn.addEventListener('touchstart', e => { e.preventDefault(); moveBtn(); }, { passive: false });
+
+noBtn.addEventListener('click', () => {
+    yesBtn.style.cssText = '';
+    showCard(step1, step2, null);
+    setTimeout(() => {
+        showCard(step2, step3, () => { if (!qrReady) buildQR(); });
+    }, 5500);
+});
+
+/* ============ САКУРА (фон) ============ */
+const sc  = document.getElementById('sakura-canvas');
+const sct = sc.getContext('2d');
+let SW = sc.width  = window.innerWidth;
+let SH = sc.height = window.innerHeight;
+window.addEventListener('resize', () => { SW = sc.width = window.innerWidth; SH = sc.height = window.innerHeight; });
+
+const PAL = [[255,192,210],[255,210,228],[252,230,240],[255,175,200],[255,240,245],[248,200,218]];
+function pFill() {
+    const [r,g,b] = PAL[Math.floor(Math.random()*PAL.length)];
+    return `rgba(${r},${g},${b},${(Math.random()*.35+.45).toFixed(2)})`;
+}
+function drawLeaf(c,x,y,sz,ang,al,fill) {
+    c.save(); c.translate(x,y); c.rotate(ang); c.globalAlpha=al;
+    c.beginPath();
+    c.moveTo(0,-sz);
+    c.bezierCurveTo( sz*1.05,-sz*.45, sz*1.05, sz*.55, 0, sz*.95);
+    c.bezierCurveTo(-sz*1.05, sz*.55,-sz*1.05,-sz*.45, 0,-sz);
+    c.fillStyle=fill; c.fill();
+    c.beginPath(); c.moveTo(0,-sz*.85); c.quadraticCurveTo(sz*.15,0,0,sz*.85);
+    c.strokeStyle='rgba(255,255,255,.4)'; c.lineWidth=sz*.13; c.stroke();
+    c.restore();
+}
+const petals = Array.from({length:75}, () => ({
+    x:Math.random()*SW, y:Math.random()*SH,
+    sz:Math.random()*9+5, ang:Math.random()*Math.PI*2,
+    spin:(Math.random()-.5)*.04, dx:(Math.random()-.42)*1.3, dy:Math.random()*1.1+.35,
+    sw:Math.random()*Math.PI*2, ss:Math.random()*.014+.004, sa:Math.random()*1.8+.5,
+    fill:pFill(), al:Math.random()*.4+.45
+}));
+const sparks = Array.from({length:30}, () => ({
+    x:Math.random()*SW, y:Math.random()*SH,
+    r:Math.random()*2.2+.6, dy:Math.random()*.6+.15, dx:(Math.random()-.5)*.4, op:Math.random()*.2+.08
+}));
+(function loop() {
+    sct.clearRect(0,0,SW,SH);
+    sparks.forEach(s => {
+        sct.beginPath(); sct.arc(s.x,s.y,s.r,0,Math.PI*2);
+        sct.fillStyle=`rgba(255,200,220,${s.op})`; sct.fill();
+        s.y+=s.dy; s.x+=s.dx;
+        if(s.y>SH+4){s.y=-4;s.x=Math.random()*SW;}
+    });
+    petals.forEach(p => {
+        p.sw+=p.ss; p.x+=p.dx+Math.sin(p.sw)*p.sa; p.y+=p.dy; p.ang+=p.spin;
+        if(p.y>SH+22){p.y=-22;p.x=Math.random()*SW;p.fill=pFill();}
+        if(p.x>SW+22)p.x=-22; if(p.x<-22)p.x=SW+22;
+        drawLeaf(sct,p.x,p.y,p.sz,p.ang,p.al,p.fill);
+    });
+    requestAnimationFrame(loop);
+})();
+
+/* ============================================================
+   3D QR — САКУРА-ДЕРЕВО КАК НА СКРИНШОТЕ
+   ============================================================ */
+let qrReady = false;
+let is3D    = true;
+let camera, scene, renderer, root;
+let camBaseX, camBaseY, camBaseZ;
+
+function buildQR() {
+    qrReady = true;
+    const wrap = document.getElementById('qr3d');
+    const SIZE = wrap.clientWidth || 300;
+
+    /* QR данные */
     const qr = qrcode(0, 'M');
     qr.addData('https://invitons.onrender.com/');
     qr.make();
-    const count = qr.getModuleCount();
+    const N    = qr.getModuleCount();  // ~25
+    const half = N / 2;
 
+    /* Scene */
     scene = new THREE.Scene();
-    
-    // ОТДАЛЕНИЕ: Увеличили d (коэффициент зума), чтобы дерево влезло
-    const d = count * 0.9; 
-    camera = new THREE.OrthographicCamera(-d, d, d, -d, 1, 1000);
-    
-    // ГРАДУС: Изменили Y с 20 на 12, чтобы смотреть "ниже", более горизонтально
-    camera.position.set(20, 12, 20); 
-    camera.lookAt(0, 0, 0);
+
+    /* Изометрическая камера — точно как на скриншоте (45° сверху-сбоку) */
+    // D — радиус «обзора», берём с запасом чтобы крона влезла
+    const D = N * 1.15;
+    camera = new THREE.OrthographicCamera(-D, D, D, -D, 0.1, 3000);
+
+    // Позиция: строго изометрия (X=Z=Y)
+    camBaseX = D * 1.3;
+    camBaseY = D * 1.05;
+    camBaseZ = D * 1.3;
+    camera.position.set(camBaseX, camBaseY, camBaseZ);
+
+    // Смотрим на центр (чуть выше плиты, чтобы крона была по центру)
+    camera.lookAt(0, N * 0.22, 0);
 
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(size, size);
-    renderer.setPixelRatio(window.devicePixelRatio);
-    container.appendChild(renderer.domElement);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(SIZE, SIZE);
+    renderer.setClearColor(0x000000, 0);
+    wrap.appendChild(renderer.domElement);
 
-    const light = new THREE.DirectionalLight(0xffffff, 1.2);
-    light.position.set(10, 20, 10);
-    scene.add(light);
-    scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+    /* Свет */
+    const sun = new THREE.DirectionalLight(0xfff0f5, 1.5);
+    sun.position.set(1.5, 3, 1.5);
+    scene.add(sun);
+    scene.add(new THREE.AmbientLight(0xffe8f0, 0.8));
+    const fill = new THREE.DirectionalLight(0xffffff, 0.35);
+    fill.position.set(-1, 1, -1);
+    scene.add(fill);
 
-    qrGroup = new THREE.Group();
-    scene.add(qrGroup);
+    root = new THREE.Group();
+    scene.add(root);
 
-    const geo = new THREE.BoxGeometry(1, 1, 1);
+    /* Материалы */
+    const M = {
+        white:  new THREE.MeshLambertMaterial({ color: 0xffffff }),
+        floor:  new THREE.MeshLambertMaterial({ color: 0xeef5e8 }),   // светлый пол плиты
+        green:  new THREE.MeshLambertMaterial({ color: 0x62a63a }),   // трава / углы QR
+        brown:  new THREE.MeshLambertMaterial({ color: 0x7b4a2d }),   // ствол
+        pink1:  new THREE.MeshLambertMaterial({ color: 0xc2407a }),   // тёмно-розовый (центр кроны)
+        pink2:  new THREE.MeshLambertMaterial({ color: 0xd96b9c }),   // средний
+        pink3:  new THREE.MeshLambertMaterial({ color: 0xeea0c4 }),   // светлый
+        pink4:  new THREE.MeshLambertMaterial({ color: 0xf5c8dc }),   // самый светлый (края)
+    };
+
+    /* Куб (pivot снизу) */
+    const geo = new THREE.BoxGeometry(1,1,1);
     geo.translate(0, 0.5, 0);
 
-    const mWhite = new THREE.MeshLambertMaterial({ color: '#ffffff' });
-    const mGreen = new THREE.MeshLambertMaterial({ color: '#7cb342' }); 
-    const mPink = new THREE.MeshLambertMaterial({ color: '#f48fb1' });  
-    const mBrown = new THREE.MeshLambertMaterial({ color: '#795548' }); 
+    /* === СТРОИМ ПЛИТУ + ДЕРЕВО === */
+    for (let row = 0; row < N; row++) {
+        for (let col = 0; col < N; col++) {
+            const dark = qr.isDark(row, col);
+            const px   = col - half + 0.5;
+            const pz   = row - half + 0.5;
+            const dist = Math.sqrt(px*px + pz*pz);
 
-    const half = count / 2;
+            /* Угловые блоки QR */
+            const isCorner = (row < 7 && col < 7) ||
+                             (row < 7 && col > N-8) ||
+                             (row > N-8 && col < 7);
 
-    for (let x = 0; x < count; x++) {
-        for (let z = 0; z < count; z++) {
-            const dark = qr.isDark(x, z);
-            const posX = x - half + 0.5;
-            const posZ = z - half + 0.5;
-            const dist = Math.sqrt(posX*posX + posZ*posZ);
-            const isCorner = (x < 7 && z < 7) || (x > count - 8 && z < 7) || (x < 7 && z > count - 8);
+            /* --- ПЛИТА (основание) --- */
+            const baseBlock = new THREE.Mesh(geo, dark ? M.green : M.floor);
+            baseBlock.position.set(px, 0, pz);
+            baseBlock.scale.set(0.97, dark ? 0.35 : 0.12, 0.97);
+            root.add(baseBlock);
 
-            if (!dark) {
-                const b = new THREE.Mesh(geo, mWhite);
-                b.position.set(posX, 0, posZ);
-                b.scale.set(0.95, 0.1, 0.95);
-                qrGroup.add(b);
-            } else {
-                if (isCorner) {
-                    const b = new THREE.Mesh(geo, mGreen);
-                    b.position.set(posX, 0, posZ);
-                    b.scale.set(0.95, 0.4, 0.95);
-                    qrGroup.add(b);
-                } else if (dist < 2.5) {
-                    // ВЫСОКИЙ СТВОЛ
-                    const b = new THREE.Mesh(geo, mBrown);
-                    b.position.set(posX, 0, posZ);
-                    b.scale.set(0.95, 8, 0.95); 
-                    qrGroup.add(b);
-                } else if (dist < 9) { // Увеличили радиус кроны (пышность)
-                    const base = new THREE.Mesh(geo, mPink);
-                    base.position.set(posX, 0, posZ);
-                    base.scale.set(0.95, 0.2, 0.95);
-                    qrGroup.add(base);
+            if (!dark) continue;
 
-                    // ПЫШНАЯ КРОНА: сделали её выше и шире
-                    const leafH = Math.max(3, 12 - dist * 1.1); 
-                    const leaf = new THREE.Mesh(geo, mPink);
-                    // Подняли крону выше по стволу (на уровень 4)
-                    leaf.position.set(posX, 4, posZ); 
-                    leaf.scale.set(0.98, leafH, 0.98); // Чуть плотнее блоки
-                    qrGroup.add(leaf);
-                } else {
-                    const b = new THREE.Mesh(geo, mGreen);
-                    b.position.set(posX, 0, posZ);
-                    b.scale.set(0.95, 0.2, 0.95);
-                    qrGroup.add(b);
-                }
+            /* --- Угловые квадраты: немного выше --- */
+            if (isCorner) {
+                const b = new THREE.Mesh(geo, M.green);
+                b.position.set(px, 0, pz);
+                b.scale.set(0.96, 0.5, 0.96);
+                root.add(b);
+                continue;
             }
+
+            /* --- СТВОЛ (центр) --- */
+            if (dist < 1.7) {
+                const trunk = new THREE.Mesh(geo, M.brown);
+                trunk.position.set(px, 0, pz);
+                trunk.scale.set(0.88, 11, 0.88);
+                root.add(trunk);
+                continue;
+            }
+
+            /* --- КРОНА (radius 2–11) --- */
+            if (dist < 11.5) {
+                // Высота столбика: у ствола максимум, к краям меньше
+                const h = Math.max(2.5, 14 - dist * 1.15);
+
+                // Цвет: по кольцам от тёмного к светлому
+                let mat;
+                if      (dist < 3.8)  mat = M.pink1;
+                else if (dist < 5.8)  mat = M.pink2;
+                else if (dist < 8.5)  mat = M.pink3;
+                else                  mat = M.pink4;
+
+                const crown = new THREE.Mesh(geo, mat);
+                // Основание кроны на высоте ~5 (верхушка ствола)
+                crown.position.set(px, 5, pz);
+                crown.scale.set(0.96, h, 0.96);
+                root.add(crown);
+            }
+            /* dist >= 11.5 — просто зелёный плоский (уже добавлен baseBlock) */
         }
     }
-    animate();
+
+    renderLoop();
 }
 
-        function toggleView() {
-            is3DView = !is3DView;
-            const targetY = is3DView ? 1 : 0.01;
-            const targetCam = is3DView ? {x:20, y:20, z:20} : {x:0, y:30, z:0};
+/* Переключение 3D ↔ плоский QR */
+function toggleView() {
+    is3D = !is3D;
 
-            new TWEEN.Tween(qrGroup.scale).to({y: targetY}, 800).easing(TWEEN.Easing.Quadratic.InOut).start();
-            new TWEEN.Tween(camera.position).to(targetCam, 800).onUpdate(() => camera.lookAt(0,0,0)).start();
-        }
+    new TWEEN.Tween(root.scale)
+        .to({ y: is3D ? 1 : 0.001 }, 700)
+        .easing(TWEEN.Easing.Quadratic.InOut)
+        .start();
 
-        function animate(time) {
-            requestAnimationFrame(animate);
-            TWEEN.update(time);
-            if (is3DView) qrGroup.rotation.y += 0.005;
-            renderer.render(scene, camera);
-        }
-    </script>
+    const toPos = is3D
+        ? { x: camBaseX, y: camBaseY,  z: camBaseZ }
+        : { x: 0.001,    y: 9999,      z: 0.001    };
+
+    new TWEEN.Tween(camera.position)
+        .to(toPos, 700)
+        .easing(TWEEN.Easing.Quadratic.InOut)
+        .onUpdate(() => camera.lookAt(0, is3D ? 2 : 0, 0))
+        .start();
+}
+
+function renderLoop(t) {
+    requestAnimationFrame(renderLoop);
+    TWEEN.update(t);
+    if (is3D && root) root.rotation.y += 0.006;
+    if (renderer) renderer.render(scene, camera);
+}
+</script>
 </body>
 </html>
