@@ -4,13 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>7 Мамыр - Арнайы шақыру 🎖️</title>
+    
+    <!-- Required Libraries for 3D QR -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+
     <style>
         :root {
             --primary: #4ade80;
             --secondary: #16a34a;
             --danger: #f43f5e;
-            --bg-dark: #070a13;
-            --glass: rgba(15, 23, 42, 0.8);
+            --bg-dark: #FAFAFA; /* Updated to Light Theme */
+            --glass: rgba(255, 255, 255, 0.8);
             --sakura: #ffb7c5;
         }
 
@@ -27,10 +33,11 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background: var(--bg-dark);
+            /* Light theme radial gradient */
+            background: radial-gradient(circle at center, #ffffff 0%, #e5e5e5 100%);
             font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
             overflow: hidden;
-            color: #f8fafc;
+            color: #333; /* Darker text for light theme */
         }
 
         #sakura-canvas {
@@ -55,8 +62,8 @@
             -webkit-backdrop-filter: blur(25px);
             border-radius: 30px;
             padding: 35px 25px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1);
             text-align: center;
             transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
         }
@@ -67,7 +74,7 @@
             font-size: 1.5rem;
             margin-bottom: 25px;
             line-height: 1.3;
-            color: #fff;
+            color: #111;
         }
 
         .btn-group {
@@ -86,7 +93,6 @@
             transition: 0.3s;
         }
 
-        /* "ИӘ" батырмасы қашады */
         #yesBtn {
             background: linear-gradient(135deg, #ff4d6d, #c9184a);
             color: white;
@@ -98,42 +104,21 @@
             color: white;
         }
 
-        /* 3D QR Section */
+        /* 3D QR Container Update */
         .qr-container {
             margin: 25px auto;
-            width: 200px;
-            height: 200px;
+            width: 250px; /* Slightly larger for better 3D visibility */
+            height: 250px;
             cursor: pointer;
-        }
-
-        .qr-frame {
-            width: 100%;
-            height: 100%;
-            position: relative;
-            transform-style: preserve-3d;
-            transform: rotateX(45deg) rotateZ(-45deg);
-            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        .qr-frame.flat {
-            transform: rotateX(0deg) rotateZ(0deg);
-        }
-
-        /* QR-ды WebGPU стилінде "блоктардан" жасалғандай көрсету үшін эффект */
-        .qr-image {
-            width: 100%;
-            height: 100%;
-            background: #fff;
-            padding: 10px;
-            border-radius: 10px;
-            box-shadow: 
-                -10px 10px 0px rgba(74, 222, 128, 0.3),
-                -20px 20px 0px rgba(74, 222, 128, 0.1);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            background: #FAFAFA;
         }
 
         .details {
             text-align: left;
-            background: rgba(255,255,255,0.05);
+            background: rgba(0,0,0,0.03);
             padding: 15px;
             border-radius: 15px;
             margin: 20px 0;
@@ -159,10 +144,11 @@
 </head>
 <body>
 
+    <!-- 2D Background Canvas for falling petals -->
     <canvas id="sakura-canvas"></canvas>
 
     <div class="container">
-        <!-- 1 ЭКРАН -->
+        <!-- STEP 1 -->
         <div id="step1" class="card">
             <h1>7-ші мамырға сыйлық керек пе? 🎁<br><small style="font-size: 0.8rem; opacity: 0.7;">Иә немесе жоқ, тез айтыңызшы!</small></h1>
             <div class="btn-group">
@@ -171,43 +157,41 @@
             </div>
         </div>
 
-        <!-- 2 ЭКРАН -->
+        <!-- STEP 2 -->
         <div id="step2" class="card hidden">
             <h1 id="sad-text">ӨКІНІШТІ... 💔<br>ӨЗІҢІЗДЕН КӨРІҢІЗ!</h1>
         </div>
 
-        <!-- 3 ЭКРАН -->
+        <!-- STEP 3 -->
         <div id="step3" class="card hidden">
-            <h1 style="color: var(--primary);">7 МАМЫРМЕН! 🎖️</h1>
+            <h1 style="color: var(--secondary);">7 МАМЫРМЕН! 🎖️</h1>
             <p style="font-size: 0.9rem; margin-bottom: 15px; opacity: 0.8;">
                 Бұл тек кішігірім қалжың еді! Сізді мерекелік кешке шақырамыз.
             </p>
 
-            <div class="qr-container" onclick="this.querySelector('.qr-frame').classList.toggle('flat')">
-                <div class="qr-frame">
-                    <img class="qr-image" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://reactiive.io/demos/cherry-blossom-qrcode" alt="QR">
-                </div>
-            </div>
-            <p style="font-size: 0.7rem; color: var(--primary); margin-bottom: 15px;">👆 3D QR-ды басып көріңіз</p>
+            <!-- 3D Engine Hooks Here -->
+            <div id="qr3d" class="qr-container" onclick="toggleView()"></div>
+            
+            <p style="font-size: 0.7rem; color: var(--secondary); margin-bottom: 15px;">👆 Click map to flatten/scan</p>
 
             <div class="details">
                 <p>📍 <b>Орын:</b> Мерекелік дастархан</p>
                 <p>📅 <b>Күні:</b> 7 Мамыр, 2026</p>
                 <p>✨ <b>Сыйлық:</b> Осы шақыру!</p>
             </div>
-            
-            <p style="font-size: 0.8rem; font-style: italic;">Cherry Blossom Animation & 3D QR Style</p>
         </div>
     </div>
 
     <script>
+        // ==========================================
+        // UI INTERACTION LOGIC
+        // ==========================================
         const yesBtn = document.getElementById('yesBtn');
         const noBtn = document.getElementById('noBtn');
         const step1 = document.getElementById('step1');
         const step2 = document.getElementById('step2');
         const step3 = document.getElementById('step3');
 
-        // --- ИӘ БАТЫРМАСЫ ҚАШАДЫ ---
         const moveBtn = () => {
             const x = Math.random() * (window.innerWidth - yesBtn.offsetWidth - 40) + 20;
             const y = Math.random() * (window.innerHeight - yesBtn.offsetHeight - 40) + 20;
@@ -220,7 +204,6 @@
         yesBtn.addEventListener('mouseover', moveBtn);
         yesBtn.addEventListener('touchstart', (e) => { e.preventDefault(); moveBtn(); });
 
-        // --- ЖОҚ БАТЫРМАСЫ БАСЫЛАДЫ ---
         noBtn.addEventListener('click', () => {
             step1.classList.add('hidden');
             setTimeout(() => {
@@ -228,25 +211,29 @@
                 step2.style.display = 'block';
                 setTimeout(() => step2.classList.remove('hidden'), 50);
 
-                // Бірнеше минут емес, демонстрация үшін 3 секундтан кейін нағыз бетке өтеді
                 setTimeout(() => {
                     step2.classList.add('hidden');
                     setTimeout(() => {
                         step2.style.display = 'none';
                         step3.style.display = 'block';
                         setTimeout(() => step3.classList.remove('hidden'), 50);
+                        
+                        // Initialize 3D QR once the container is visible
+                        if (!qrInitialized) init3DQR();
                     }, 600);
-                }, 3000);
+                }, 2000);
             }, 600);
         });
 
-        // --- SAKURA ANIMATION (WebGPU Style) ---
+        // ==========================================
+        // SAKURA 2D BACKGROUND ANIMATION
+        // ==========================================
         const canvas = document.getElementById('sakura-canvas');
         const ctx = canvas.getContext('2d');
         let w = canvas.width = window.innerWidth;
         let h = canvas.height = window.innerHeight;
 
-        const petals = Array.from({ length: 50 }, () => ({
+        const petals = Array.from({ length: 40 }, () => ({
             x: Math.random() * w,
             y: Math.random() * h,
             r: Math.random() * 4 + 2,
@@ -276,8 +263,196 @@
             requestAnimationFrame(draw);
         }
         draw();
-
         window.onresize = () => { w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; };
+
+        // ==========================================
+        // THREE.JS PROCEDURAL 3D QR GENERATION
+        // ==========================================
+        let qrInitialized = false;
+        let is3DView = true;
+        let camera, scene, renderer, qrGroup;
+        let centerOffset = 0;
+
+        function init3DQR() {
+            qrInitialized = true;
+            const container = document.getElementById('qr3d');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            // 1. Generate QR Matrix
+            const qr = qrcode(0, 'M'); // 'M' error correction
+            qr.addData('https://invitons.onrender.com/');
+            qr.make();
+            const moduleCount = qr.getModuleCount();
+            centerOffset = moduleCount / 2;
+
+            // 2. Setup Three.js Scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color('#FAFAFA'); // Light Theme
+            
+            // Adding subtle Bloom-like lighting logic (High Ambient)
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.85); 
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
+            dirLight.position.set(5, 10, 5);
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 1024;
+            dirLight.shadow.mapSize.height = 1024;
+            dirLight.shadow.camera.near = 0.5;
+            dirLight.shadow.camera.far = 50;
+            scene.add(dirLight);
+
+            camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+            camera.position.set(centerOffset + 18, 15, centerOffset + 18);
+            camera.lookAt(centerOffset, 0, centerOffset);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+            renderer.setSize(width, height);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            // ACESFilmicToneMapping for natural pastel colors
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.1;
+            container.appendChild(renderer.domElement);
+
+            // 3. Build Procedural Instanced Mesh
+            qrGroup = new THREE.Group();
+            scene.add(qrGroup);
+
+            // Origin at bottom (y=0) to allow perfect Y-scale "squishing" to 2D
+            const geometry = new THREE.BoxGeometry(1, 1, 1);
+            geometry.translate(0, 0.5, 0); 
+            const material = new THREE.MeshStandardMaterial({
+                roughness: 0.9,
+                metalness: 0.05
+            });
+
+            // Calculate max potential blocks (rough estimate to size buffer)
+            const maxLayers = 5;
+            const maxInstances = moduleCount * moduleCount * maxLayers;
+            const mesh = new THREE.InstancedMesh(geometry, material, maxInstances);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+
+            const dummy = new THREE.Object3D();
+            const colorLight = new THREE.Color('#FDF5E6'); // Path
+            const colorTrunk = new THREE.Color('#8B4513'); // Trunk
+            const colorSakura = new THREE.Color('#FFB7C5'); // Cherry Blossom
+            const colorGrass = new THREE.Color('#E0F2F1'); // Ground
+
+            let instanceIdx = 0;
+            const canopyOuterRadius = moduleCount * 0.4;
+
+            for (let x = 0; x < moduleCount; x++) {
+                for (let z = 0; z < moduleCount; z++) {
+                    const isDark = qr.isDark(x, z);
+                    const dist = Math.sqrt(Math.pow(x - centerOffset, 2) + Math.pow(z - centerOffset, 2));
+
+                    if (!isDark) {
+                        // Light Modules (0): Flat Dirt/Path
+                        dummy.position.set(x, 0, z);
+                        dummy.scale.set(1, 0.1, 1); 
+                        dummy.updateMatrix();
+                        mesh.setMatrixAt(instanceIdx, dummy.matrix);
+                        mesh.setColorAt(instanceIdx, colorLight);
+                        instanceIdx++;
+                    } else {
+                        // Dark Modules (1): Procedural Setup
+                        // ALWAYS put a base block so it reads as dark from above
+                        let baseColor = colorGrass;
+                        if (dist < 3) baseColor = colorTrunk;
+                        else if (dist <= canopyOuterRadius) baseColor = colorSakura;
+
+                        dummy.position.set(x, 0, z);
+                        dummy.scale.set(1, 0.15, 1);
+                        dummy.updateMatrix();
+                        mesh.setMatrixAt(instanceIdx, dummy.matrix);
+                        mesh.setColorAt(instanceIdx, baseColor);
+                        instanceIdx++;
+
+                        // Build Verticality
+                        if (dist < 3) {
+                            // Trunk
+                            const h = 2 + Math.random() * 1.5;
+                            dummy.position.set(x, 0, z);
+                            dummy.scale.set(1, h, 1);
+                            dummy.updateMatrix();
+                            mesh.setMatrixAt(instanceIdx, dummy.matrix);
+                            mesh.setColorAt(instanceIdx, colorTrunk);
+                            instanceIdx++;
+                        } else if (dist <= canopyOuterRadius) {
+                            // Sakura Canopy Logic Formula
+                            const t = 1 - (dist / canopyOuterRadius);
+                            const layers = Math.max(3, Math.round(maxLayers * (0.25 + 0.75 * Math.pow(t, 2))));
+                            
+                            for (let l = 0; l < layers; l++) {
+                                // Add random offset for organic height look
+                                const yPos = 1.5 + l + (Math.random() * 0.3);
+                                dummy.position.set(x, yPos, z);
+                                dummy.scale.set(1, 1, 1);
+                                dummy.updateMatrix();
+                                mesh.setMatrixAt(instanceIdx, dummy.matrix);
+                                mesh.setColorAt(instanceIdx, colorSakura);
+                                instanceIdx++;
+                            }
+                        }
+                    }
+                }
+            }
+            mesh.count = instanceIdx; // Trim buffer to exact usage
+            qrGroup.add(mesh);
+
+            animate3D();
+        }
+
+        // 4. View Transition (Toggle 3D/2D)
+        window.toggleView = function() {
+            if(!qrInitialized) return;
+            is3DView = !is3DView;
+
+            // Target configurations for Camera and Geometry scale
+            const targetCamPos = is3DView 
+                ? { x: centerOffset + 18, y: 15, z: centerOffset + 18 } 
+                : { x: centerOffset, y: 35, z: centerOffset }; // Looking straight down
+            
+            // "Squishing" the Y scale removes the procedural noise and flattens it for scanning
+            const targetYScale = is3DView ? 1 : 0.01; 
+
+            new TWEEN.Tween(qrGroup.scale)
+                .to({ y: targetYScale }, 1200)
+                .easing(TWEEN.Easing.Cubic.InOut)
+                .start();
+
+            new TWEEN.Tween(camera.position)
+                .to(targetCamPos, 1200)
+                .easing(TWEEN.Easing.Cubic.InOut)
+                .onUpdate(() => {
+                    camera.lookAt(centerOffset, 0, centerOffset);
+                })
+                .start();
+        }
+
+        function animate3D(time) {
+            requestAnimationFrame(animate3D);
+            TWEEN.update(time);
+            
+            // Slight rotation only in 3D mode for aesthetic
+            if (is3DView && qrGroup) {
+                // Keep the pivot centered
+                qrGroup.position.x = centerOffset;
+                qrGroup.position.z = centerOffset;
+                qrGroup.rotation.y = Math.sin(time * 0.0005) * 0.1;
+                qrGroup.position.x = centerOffset - (Math.cos(qrGroup.rotation.y) * centerOffset) - (Math.sin(qrGroup.rotation.y) * centerOffset);
+                qrGroup.position.z = centerOffset - (-Math.sin(qrGroup.rotation.y) * centerOffset) + (Math.cos(qrGroup.rotation.y) * centerOffset);
+            } else if (!is3DView && qrGroup) {
+                // Snap back to grid alignment for perfect scan
+                qrGroup.rotation.y = 0;
+                qrGroup.position.set(0,0,0);
+            }
+
+            renderer.render(scene, camera);
+        }
     </script>
 </body>
 </html>
