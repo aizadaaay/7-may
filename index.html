@@ -90,13 +90,12 @@
             75%      { transform: translateX(5px)  rotate(1deg); }
         }
 
-        /* QR-блок — квадратный, во всю ширину карточки */
         .qr-wrap {
             width: 100%;
             aspect-ratio: 1 / 1;
             cursor: pointer;
             border-radius: 16px;
-            background: #f8f8f8;
+            background: transparent;
             overflow: hidden;
             margin: 8px auto 4px;
             box-shadow: 0 6px 24px rgba(200,100,130,.15);
@@ -104,7 +103,11 @@
         }
         .qr-wrap canvas { display: block; }
 
-        .qr-hint { font-size: .74rem; color: #aaa; margin-bottom: 6px; }
+        /* Hint label with animated arrow */
+        .qr-hint {
+            font-size: .74rem; color: #aaa; margin-bottom: 6px;
+            transition: opacity 0.5s;
+        }
 
         .direct-link {
             display: inline-block; margin: 4px 0 10px;
@@ -117,6 +120,23 @@
             background: linear-gradient(135deg, #f0fdf4, #fce7f3);
             padding: 12px 14px; border-radius: 14px;
             font-size: .88rem; border-left: 4px solid #16a34a; line-height: 1.85;
+        }
+
+        /* Transition overlay label */
+        #view-label {
+            position: absolute;
+            bottom: 8px; left: 50%; transform: translateX(-50%);
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: blur(4px);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: .7rem;
+            font-weight: 700;
+            color: #c9184a;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            white-space: nowrap;
+            z-index: 5;
         }
     </style>
 </head>
@@ -147,8 +167,10 @@
         <h1 style="color:#16a34a;">7 МАМЫРМЕН! 🎖️</h1>
         <p style="font-size:.88rem;color:#555;margin-bottom:6px;">Бұл қалжың еді! Міне, сіздің шақыруыңыз:</p>
 
-        <div id="qr3d" class="qr-wrap" onclick="toggleView()"></div>
-        <p class="qr-hint">👆 Сканерлеу үшін басыңыз (тегіс болады)</p>
+        <div id="qr3d" class="qr-wrap" onclick="toggleView()">
+            <div id="view-label">🌸 3D көру</div>
+        </div>
+        <p class="qr-hint" id="hint-text">👆 Сканерлеу үшін басыңыз (тегіс болады)</p>
         <a href="https://invitons.onrender.com/" class="direct-link" target="_blank" rel="noopener">Сайт арқылы көру →</a>
 
         <div class="details">
@@ -253,77 +275,90 @@ const sparks = Array.from({length:30}, () => ({
 })();
 
 /* ============================================================
-   3D QR — САКУРА-ДЕРЕВО КАК НА СКРИНШОТЕ
+   3D QR — САКУРА ДЕРЕВО с плавным переходом 3D <-> 2D
    ============================================================ */
-let qrReady = false;
-let is3D    = true;
+let qrReady  = false;
+let is3D     = true;
+let animating = false;
 let camera, scene, renderer, root;
-let camBaseX, camBaseY, camBaseZ;
+
+// Камера анимация state
+const camState = {
+    // iso angles
+    angleY: Math.PI / 4,     // 45°
+    angleX: -Math.PI / 4.5, // чуть сверху
+    dist: 1,
+    zoom: 1,
+    progress: 0             // 0 = 3D iso, 1 = 2D flat top
+};
+
+let N, half;
+const blockData = []; // { mesh, type, col, row, px, pz, baseY, scaleY }
 
 function buildQR() {
     qrReady = true;
     const wrap = document.getElementById('qr3d');
     const SIZE = wrap.clientWidth || 300;
 
-    /* QR данные */
     const qr = qrcode(0, 'M');
     qr.addData('https://invitons.onrender.com/');
     qr.make();
-    const N    = qr.getModuleCount();  // ~25
-    const half = N / 2;
+    N    = qr.getModuleCount();
+    half = N / 2;
 
-    /* Scene */
     scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xf5f0f2);
 
-    /* Изометрическая камера — точно как на скриншоте (45° сверху-сбоку) */
-    // D — радиус «обзора», берём с запасом чтобы крона влезла
-    const D = N * 1.15;
+    /* --- Камера: OrthographicCamera ---
+       Будем менять её position и lookAt через TWEEN для плавного перехода */
+    const D = N * 0.7;
     camera = new THREE.OrthographicCamera(-D, D, D, -D, 0.1, 3000);
 
-    // Позиция: строго изометрия (X=Z=Y)
-    camBaseX = D * 1.3;
-    camBaseY = D * 1.05;
-    camBaseZ = D * 1.3;
-    camera.position.set(camBaseX, camBaseY, camBaseZ);
+    // Стартовая изометрическая позиция
+    setCamera3D();
 
-    // Смотрим на центр (чуть выше плиты, чтобы крона была по центру)
-    camera.lookAt(0, N * 0.22, 0);
-
-    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(SIZE, SIZE);
-    renderer.setClearColor(0x000000, 0);
+    renderer.setClearColor(0xf5f0f2, 1);
+    renderer.shadowMap.enabled = false;
     wrap.appendChild(renderer.domElement);
 
-    /* Свет */
-    const sun = new THREE.DirectionalLight(0xfff0f5, 1.5);
-    sun.position.set(1.5, 3, 1.5);
+    /* Свет — мягкий, как в оригинале */
+    // Основное солнце — тёплое, не слишком яркое
+    const sun = new THREE.DirectionalLight(0xfff8f0, 0.7);
+    sun.position.set(2, 4, 2);
     scene.add(sun);
-    scene.add(new THREE.AmbientLight(0xffe8f0, 0.8));
-    const fill = new THREE.DirectionalLight(0xffffff, 0.35);
-    fill.position.set(-1, 1, -1);
-    scene.add(fill);
+    scene.add(new THREE.AmbientLight(0xfff0f5, 0.75));
+    const bounce = new THREE.DirectionalLight(0xffe0f0, 0.2);
+    bounce.position.set(-1, -1, -1);
+    scene.add(bounce);
+    const side = new THREE.DirectionalLight(0xf0f8ff, 0.15);
+    side.position.set(-2, 2, -1);
+    scene.add(side);
 
     root = new THREE.Group();
     scene.add(root);
 
-    /* Материалы */
+    /* Материалы — приглушённая тёмная палитра */
     const M = {
-        white:  new THREE.MeshLambertMaterial({ color: 0xffffff }),
-        floor:  new THREE.MeshLambertMaterial({ color: 0xeef5e8 }),   // светлый пол плиты
-        green:  new THREE.MeshLambertMaterial({ color: 0x62a63a }),   // трава / углы QR
-        brown:  new THREE.MeshLambertMaterial({ color: 0x7b4a2d }),   // ствол
-        pink1:  new THREE.MeshLambertMaterial({ color: 0xc2407a }),   // тёмно-розовый (центр кроны)
-        pink2:  new THREE.MeshLambertMaterial({ color: 0xd96b9c }),   // средний
-        pink3:  new THREE.MeshLambertMaterial({ color: 0xeea0c4 }),   // светлый
-        pink4:  new THREE.MeshLambertMaterial({ color: 0xf5c8dc }),   // самый светлый (края)
+        floor:  new THREE.MeshLambertMaterial({ color: 0xddd8d0 }),
+        floorD: new THREE.MeshLambertMaterial({ color: 0x222222 }),
+        green:  new THREE.MeshLambertMaterial({ color: 0x4e7a28 }),
+        greenD: new THREE.MeshLambertMaterial({ color: 0x1a1a1a }),
+        brown:  new THREE.MeshLambertMaterial({ color: 0x5c3a20 }),
+        brownD: new THREE.MeshLambertMaterial({ color: 0x222222 }),
+        pink0:  new THREE.MeshLambertMaterial({ color: 0x8c3055 }),  // центр — глубокий
+        pink1:  new THREE.MeshLambertMaterial({ color: 0xa84870 }),
+        pink2:  new THREE.MeshLambertMaterial({ color: 0xc06890 }),
+        pink3:  new THREE.MeshLambertMaterial({ color: 0xd48aaa }),
+        pink4:  new THREE.MeshLambertMaterial({ color: 0xe5afc4 }),  // края
+        pinkD:  new THREE.MeshLambertMaterial({ color: 0x222222 }),
     };
 
-    /* Куб (pivot снизу) */
-    const geo = new THREE.BoxGeometry(1,1,1);
+    const geo = new THREE.BoxGeometry(1, 1, 1);
     geo.translate(0, 0.5, 0);
 
-    /* === СТРОИМ ПЛИТУ + ДЕРЕВО === */
     for (let row = 0; row < N; row++) {
         for (let col = 0; col < N; col++) {
             const dark = qr.isDark(row, col);
@@ -331,86 +366,254 @@ function buildQR() {
             const pz   = row - half + 0.5;
             const dist = Math.sqrt(px*px + pz*pz);
 
-            /* Угловые блоки QR */
             const isCorner = (row < 7 && col < 7) ||
                              (row < 7 && col > N-8) ||
                              (row > N-8 && col < 7);
 
-            /* --- ПЛИТА (основание) --- */
-            const baseBlock = new THREE.Mesh(geo, dark ? M.green : M.floor);
-            baseBlock.position.set(px, 0, pz);
-            baseBlock.scale.set(0.97, dark ? 0.35 : 0.12, 0.97);
-            root.add(baseBlock);
+            // --- Плита (floor tile) ---
+            const floorH3D = dark ? 0.35 : 0.12;
+            const floorMat = dark ? M.green : M.floor;
+
+            const floorMesh = new THREE.Mesh(geo, floorMat);
+            floorMesh.position.set(px, 0, pz);
+            floorMesh.scale.set(0.97, floorH3D, 0.97);
+            root.add(floorMesh);
+
+            blockData.push({
+                mesh: floorMesh,
+                type: 'floor',
+                dark, px, pz, dist, isCorner,
+                mat3D: floorMat,
+                mat2D: floorMat,  // в 2D тот же цвет
+                scaleY3D: floorH3D,
+                scaleY2D: dark ? 0.4 : 0.12,
+                posY3D: 0,
+                posY2D: 0,
+            });
 
             if (!dark) continue;
 
-            /* --- Угловые квадраты: немного выше --- */
             if (isCorner) {
                 const b = new THREE.Mesh(geo, M.green);
                 b.position.set(px, 0, pz);
-                b.scale.set(0.96, 0.5, 0.96);
+                b.scale.set(0.96, 0.7, 0.96);
                 root.add(b);
+                blockData.push({
+                    mesh: b, type: 'corner',
+                    dark, px, pz, dist,
+                    mat3D: M.green,
+                    mat2D: M.green,  // в 2D остаётся зелёным
+                    scaleY3D: 0.7,
+                    scaleY2D: 0.4,
+                    posY3D: 0,
+                    posY2D: 0,
+                });
                 continue;
             }
 
-            /* --- СТВОЛ (центр) --- */
+            /* СТВОЛ */
             if (dist < 1.7) {
+                const trunkH = 11;
                 const trunk = new THREE.Mesh(geo, M.brown);
                 trunk.position.set(px, 0, pz);
-                trunk.scale.set(0.88, 11, 0.88);
+                trunk.scale.set(0.88, trunkH, 0.88);
                 root.add(trunk);
+                blockData.push({
+                    mesh: trunk, type: 'trunk',
+                    dark, px, pz, dist,
+                    mat3D: M.brown,
+                    mat2D: M.brown,  // в 2D остаётся коричневым
+                    scaleY3D: trunkH,
+                    scaleY2D: 0.4,
+                    posY3D: 0,
+                    posY2D: 0,
+                });
                 continue;
             }
 
-            /* --- КРОНА (radius 2–11) --- */
-            if (dist < 11.5) {
-                // Высота столбика: у ствола максимум, к краям меньше
-                const h = Math.max(2.5, 14 - dist * 1.15);
+            /* КРОНА — правильный купол как в оригинале */
+            if (dist < 10.5) {
+                // Купол: максимум слоёв в центре, 0 на краях
+                // Используем сферическую формулу для красивого купола
+                const r = 10.5;
+                const t = 1 - (dist / r);             // 1 в центре, 0 на краю
+                const domeTop = Math.sqrt(Math.max(0, r*r - dist*dist)); // сфера
+                const h = Math.max(1, domeTop * 0.85 + 1.5);
 
-                // Цвет: по кольцам от тёмного к светлому
-                let mat;
-                if      (dist < 3.8)  mat = M.pink1;
-                else if (dist < 5.8)  mat = M.pink2;
-                else if (dist < 8.5)  mat = M.pink3;
-                else                  mat = M.pink4;
+                // Цвет: темнее в центре, светлее к краям (как в оригинале)
+                let mat3D;
+                if      (dist < 2.5)  mat3D = M.pink0;
+                else if (dist < 5.0)  mat3D = M.pink1;
+                else if (dist < 7.5)  mat3D = M.pink2;
+                else if (dist < 9.5)  mat3D = M.pink3;
+                else                  mat3D = M.pink4;
 
-                const crown = new THREE.Mesh(geo, mat);
-                // Основание кроны на высоте ~5 (верхушка ствола)
-                crown.position.set(px, 5, pz);
-                crown.scale.set(0.96, h, 0.96);
+                // База кроны: плавно снижается от центра к краям (дно тоже сферическое)
+                const baseY = 4 + domeTop * 0.3;
+
+                const crown = new THREE.Mesh(geo, mat3D);
+                crown.position.set(px, baseY, pz);
+                crown.scale.set(0.95, h, 0.95);
                 root.add(crown);
+                blockData.push({
+                    mesh: crown, type: 'crown',
+                    dark, px, pz, dist,
+                    mat3D,
+                    mat2D: mat3D,  // В 2D сохраняем тот же цвет — розовый!
+                    scaleY3D: h,
+                    scaleY2D: 0.4,
+                    posY3D: baseY,
+                    posY2D: 0,
+                });
             }
-            /* dist >= 11.5 — просто зелёный плоский (уже добавлен baseBlock) */
         }
     }
 
     renderLoop();
 }
 
-/* Переключение 3D ↔ плоский QR */
-function toggleView() {
-    is3D = !is3D;
+/* ---- Camera helpers ---- */
+const CAM_DIST = 55;
 
-    new TWEEN.Tween(root.scale)
-        .to({ y: is3D ? 1 : 0.001 }, 700)
-        .easing(TWEEN.Easing.Quadratic.InOut)
-        .start();
-
-    const toPos = is3D
-        ? { x: camBaseX, y: camBaseY,  z: camBaseZ }
-        : { x: 0.001,    y: 9999,      z: 0.001    };
-
-    new TWEEN.Tween(camera.position)
-        .to(toPos, 700)
-        .easing(TWEEN.Easing.Quadratic.InOut)
-        .onUpdate(() => camera.lookAt(0, is3D ? 2 : 0, 0))
-        .start();
+function setCamera3D() {
+    // Классическая изометрия: камера смотрит сбоку-сверху под 35°
+    const angle = Math.PI / 4; // 45° по горизонтали
+    camera.position.set(
+        CAM_DIST * Math.sin(angle),
+        CAM_DIST * 0.82,           // ~40° от горизонта
+        CAM_DIST * Math.cos(angle)
+    );
+    camera.lookAt(0, N * 0.28, 0); // смотрим чуть выше основания чтобы крона была по центру
+    camera.up.set(0, 1, 0);
 }
 
+function setCamera2D() {
+    camera.position.set(0, CAM_DIST * 1.5, 0.001);
+    camera.lookAt(0, 0, 0);
+    camera.up.set(0, 0, -1);
+}
+
+/* ---- Toggle with smooth animation ---- */
+function toggleView() {
+    if (animating) return;
+    animating = true;
+
+    const label = document.getElementById('view-label');
+    const hint  = document.getElementById('hint-text');
+
+    if (is3D) {
+        // 3D → 2D
+        label.style.opacity = '0';
+        setTimeout(() => { label.textContent = '📷 3D қайту'; label.style.opacity = '1'; }, 350);
+        hint.textContent = '👆 3D режимге оралу үшін басыңыз';
+
+        // Animate camera
+        const startPos = { x: camera.position.x, y: camera.position.y, z: camera.position.z };
+        const endPos   = { x: 0, y: CAM_DIST * 1.5, z: 0.001 };
+
+        new TWEEN.Tween(startPos)
+            .to(endPos, 900)
+            .easing(TWEEN.Easing.Cubic.InOut)
+            .onUpdate(() => {
+                camera.position.set(startPos.x, startPos.y, startPos.z);
+                // Interpolate lookAt from (0,N*0.15,0) to (0,0,0)
+                const t = (startPos.y - CAM_DIST * 0.75) / (CAM_DIST * 1.5 - CAM_DIST * 0.75);
+                const ly = N * 0.15 * (1 - t);
+                camera.lookAt(0, ly, 0);
+                camera.up.set(0, 1, 0);
+            })
+            .onComplete(() => {
+                camera.position.set(0, CAM_DIST * 1.5, 0.001);
+                camera.lookAt(0, 0, 0);
+                camera.up.set(0, 0, -1);
+            })
+            .start();
+
+        // Animate blocks: flatten crown & trunk
+        blockData.forEach((b, i) => {
+            const delay = Math.random() * 200;
+            const fromScaleY = b.mesh.scale.y;
+            const fromPosY   = b.mesh.position.y;
+            const toScaleY   = b.scaleY2D;
+            const toPosY     = b.posY2D;
+
+            new TWEEN.Tween({ s: fromScaleY, y: fromPosY })
+                .to({ s: toScaleY, y: toPosY }, 700)
+                .delay(delay)
+                .easing(TWEEN.Easing.Back.In)
+                .onUpdate(({ s, y }) => {
+                    b.mesh.scale.y = Math.max(0.01, s);
+                    b.mesh.position.y = y;
+                })
+                .onComplete(() => {
+                    b.mesh.scale.y    = b.scaleY2D;
+                    b.mesh.position.y = b.posY2D;
+                })
+                .start();
+        });
+
+        setTimeout(() => { is3D = false; animating = false; }, 1100);
+
+    } else {
+        // 2D → 3D
+        label.style.opacity = '0';
+        setTimeout(() => { label.textContent = '🌸 3D көру'; label.style.opacity = '1'; }, 350);
+        hint.textContent = '👆 Сканерлеу үшін басыңыз (тегіс болады)';
+
+        // Reset materials first
+        blockData.forEach(b => { b.mesh.material = b.mat3D; });
+
+        // Animate camera back
+        const startPos = { x: camera.position.x, y: camera.position.y, z: camera.position.z };
+        const endPos   = {
+            x: CAM_DIST * Math.sin(Math.PI/4),
+            y: CAM_DIST * 0.82,
+            z: CAM_DIST * Math.cos(Math.PI/4)
+        };
+
+        new TWEEN.Tween(startPos)
+            .to(endPos, 900)
+            .easing(TWEEN.Easing.Cubic.InOut)
+            .onUpdate(() => {
+                camera.position.set(startPos.x, startPos.y, startPos.z);
+                camera.up.set(0, 1, 0);
+                camera.lookAt(0, N * 0.15, 0);
+            })
+            .onComplete(() => {
+                camera.lookAt(0, N * 0.28, 0);
+            })
+            .start();
+
+        // Animate blocks: raise up
+        blockData.forEach((b) => {
+            const delay = Math.random() * 300;
+            new TWEEN.Tween({ s: b.mesh.scale.y, y: b.mesh.position.y })
+                .to({ s: b.scaleY3D, y: b.posY3D }, 700)
+                .delay(delay)
+                .easing(TWEEN.Easing.Back.Out)
+                .onUpdate(({ s, y }) => {
+                    b.mesh.scale.y = Math.max(0.01, s);
+                    b.mesh.position.y = y;
+                })
+                .onComplete(() => {
+                    b.mesh.scale.y   = b.scaleY3D;
+                    b.mesh.position.y = b.posY3D;
+                })
+                .start();
+        });
+
+        setTimeout(() => { is3D = true; animating = false; }, 1200);
+    }
+}
+
+/* ---- Render loop ---- */
 function renderLoop(t) {
     requestAnimationFrame(renderLoop);
     TWEEN.update(t);
-    if (is3D && root) root.rotation.y += 0.006;
+    // Slow rotation only in 3D mode
+    if (is3D && !animating && root) {
+        root.rotation.y += 0.005;
+    }
     if (renderer) renderer.render(scene, camera);
 }
 </script>
